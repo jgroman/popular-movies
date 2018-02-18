@@ -22,7 +22,9 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
-public class SettingsActivity extends AppCompatActivity {
+public class SettingsActivity
+        extends AppCompatActivity
+         {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,4 +50,5 @@ public class SettingsActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
 }

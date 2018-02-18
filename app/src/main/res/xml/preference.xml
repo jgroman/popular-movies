@@ -16,10 +16,18 @@
      limitations under the License.
 -->
 
-<fragment
+<PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/activity_settings"
-    android:name="cz.jtek.popularmovies.SettingsFragment"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    />
+    >
+
+    <ListPreference
+        android:key="pref_key_sort_order_list"
+        android:title="@string/pref_sort_order_title"
+        android:dialogTitle="@string/pref_sort_order_dialog"
+        android:entries="@array/sort_order_items"
+        android:entryValues="@array/sort_order_values"
+        android:defaultValue="@string/pref_sort_order_most_popular"
+        android:summary="@string/pref_sort_order_most_popular"
+        />
+
+</PreferenceScreen>

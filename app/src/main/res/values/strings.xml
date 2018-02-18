@@ -3,4 +3,10 @@
 
     <string name="action_settings">Settings</string>
 
+    <string name="pref_sort_order_title">Sort Order</string>
+    <string name="pref_sort_order_dialog">Select Sort Order</string>
+    <string name="pref_sort_order_most_popular">Most Popular</string>
+    <string name="pref_sort_order_top_rated">Top Rated</string>
+
+
 </resources>
