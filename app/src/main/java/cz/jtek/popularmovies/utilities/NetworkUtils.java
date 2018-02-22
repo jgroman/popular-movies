@@ -16,41 +16,115 @@
 
 package cz.jtek.popularmovies.utilities;
 
+import android.content.Context;
+import android.net.Uri;
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Scanner;
+
+import cz.jtek.popularmovies.BuildConfig;
+import cz.jtek.popularmovies.R;
 
 public final class NetworkUtils {
 
     private static final String TAG = NetworkUtils.class.getSimpleName();
 
     /*
-     Relevant TMDb API:
+     Relevant TMDb API docs:
      Configuration - https://developers.themoviedb.org/3/configuration/get-api-configuration
-     Discover - https://developers.themoviedb.org/3/discover/movie-discover
-
+     Popular movies - https://developers.themoviedb.org/3/movies/get-popular-movies
+     Top rated movies - https://developers.themoviedb.org/3/movies/get-top-rated-movies
      */
 
-    private static final String TMDB_API_V3_URL = "https://api.themoviedb.org/3";
+    private static final String TMDB_API_AUTHORITY = "api.themoviedb.org";
+    private static final String API_SCHEME = "https";
 
-    private static final String API_PATH_CONFIGURATION = "/configuration";
-
-    private static final String API_PATH_DISCOVER_MOVIE = "/discover/movie";
+    private static final String API_PATH_VERSION = "3";
+    private static final String API_PATH_CONFIGURATION = "configuration";
+    private static final String API_PATH_MOVIE = "movie";
+    private static final String API_PATH_POPULAR = "popular";
+    private static final String API_PATH_TOP_RATED = "top_rated";
 
     private static final String API_PARAM_API_KEY = "api_key";
-    private static final String API_PARAM_SORT_BY = "sort_by";
     private static final String API_PARAM_PAGE = "page";
-    private static final String API_PARAM_INCLUDE_ADULT = "include_adult";
 
 
-    private static URL buildConfigurationUrl() {
-        return null;
+    public static URL buildConfigurationUrl() {
+
+        // Build TMDb configuration Uri
+        Uri.Builder uriBuilder = new Uri.Builder();
+        uriBuilder.scheme(API_SCHEME)
+                .authority(TMDB_API_AUTHORITY)
+                .appendPath(API_PATH_VERSION)
+                .appendPath(API_PATH_CONFIGURATION)
+                // API token comes from grade.properties file, see README
+                .appendQueryParameter(API_PARAM_API_KEY, BuildConfig.TMDB_API_TOKEN);
+
+        Uri tmdbConfigUri = uriBuilder.build();
+
+        try {
+            URL tmdbConfigUrl = new URL(tmdbConfigUri.toString());
+            Log.d(TAG, "URL config: " + tmdbConfigUrl);
+            return tmdbConfigUrl;
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    private static URL buildDiscoverUrl() {
-        return null;
+    public static URL buildMovieUrl(Context context, String sortOrder, Integer page) {
+
+        // Check input params sanity
+        if (context == null) {
+            Log.e(TAG, "buildMovieUrl: context parameter cannot be null.");
+            return null;
+        }
+
+        if (sortOrder == null || sortOrder.length() == 0) {
+            Log.e(TAG, "buildMovieUrl: sort order parameter cannot be null or empty.");
+            return null;
+        }
+
+        if (page == null || page <= 0) {
+            page = 1;
+        }
+
+        // Build TMDb movie Uri
+        Uri.Builder uriBuilder = new Uri.Builder();
+        uriBuilder.scheme(API_SCHEME)
+                .authority(TMDB_API_AUTHORITY)
+                .appendPath(API_PATH_VERSION)
+                .appendPath(API_PATH_MOVIE);
+
+        // Possible sortOrder parameter values are listed in array.xml array 'sort-order-values'
+        if (sortOrder.equals(context.getResources().getString(R.string.pref_sort_order_most_popular))) {
+            uriBuilder.appendPath(API_PATH_POPULAR);
+        } else if (sortOrder.equals(context.getResources().getString(R.string.pref_sort_order_top_rated))) {
+            uriBuilder.appendPath(API_PATH_TOP_RATED);
+        } else {
+            Log.e(TAG, "buildMovieUrl: unknown sort order parameter.");
+            return null;
+        }
+
+        // API token comes from grade.properties file, see README
+        uriBuilder.appendQueryParameter(API_PARAM_API_KEY, BuildConfig.TMDB_API_TOKEN)
+                .appendQueryParameter(API_PARAM_PAGE, page.toString());
+
+        Uri tmdbMovieUri = uriBuilder.build();
+
+        try {
+            URL tmdbMovieUrl = new URL(tmdbMovieUri.toString());
+            Log.d(TAG, "URL movie: " + tmdbMovieUrl);
+            return tmdbMovieUrl;
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
