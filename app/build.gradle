@@ -15,6 +15,11 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        buildTypes.each {
+            // TMDb API token is stored in <USER_HOME_DIR>/.gradle/grade.properties file
+            // in 'TMDbApiToken' property
+            it.buildConfigField 'String', 'TMDB_API_TOKEN', TMDbApiToken
+        }
     }
 }
 
