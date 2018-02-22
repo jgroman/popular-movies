@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.Scanner;
 
 import cz.jtek.popularmovies.BuildConfig;
@@ -121,6 +122,54 @@ public final class NetworkUtils {
             URL tmdbMovieUrl = new URL(tmdbMovieUri.toString());
             Log.d(TAG, "URL movie: " + tmdbMovieUrl);
             return tmdbMovieUrl;
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static URL buildImageUrl(Uri baseUri, String size, String filePath) {
+
+        // Check input params sanity
+        if (baseUri == null) {
+            Log.e(TAG, "buildImageUrl: baseUri parameter cannot be null.");
+            return null;
+        }
+
+        if (size == null || size.length() == 0) {
+            Log.e(TAG, "buildImageUrl: size parameter cannot be null or empty.");
+            return null;
+        }
+
+        if (filePath == null || filePath.length() == 0) {
+            Log.e(TAG, "buildImageUrl: filePath parameter cannot be null or empty.");
+            return null;
+        }
+
+        // Strip leading forward slashes from filePath
+        while (filePath.substring(0,1).equals("/")) {
+            filePath = filePath.substring(1);
+        }
+
+        // Build TMDb image Uri
+        Uri.Builder uriBuilder = new Uri.Builder();
+        uriBuilder.scheme(baseUri.getScheme())
+                .authority(baseUri.getAuthority());
+
+        List<String> pathSegments = baseUri.getPathSegments();
+        for (String pathSegment : pathSegments ) {
+            uriBuilder.appendPath(pathSegment);
+        }
+
+        uriBuilder.appendPath(size)
+                .appendPath(filePath);
+
+        Uri tmdbImageUri = uriBuilder.build();
+
+        try {
+            URL tmdbImageUrl = new URL(tmdbImageUri.toString());
+            Log.d(TAG, "URL image: " + tmdbImageUrl);
+            return tmdbImageUrl;
         } catch (MalformedURLException e) {
             e.printStackTrace();
             return null;
