@@ -27,8 +27,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import cz.jtek.popularmovies.TmdbConfig;
-import cz.jtek.popularmovies.TmdbMovie;
+import cz.jtek.popularmovies.TmdbApi;
 
 public class TmdbJsonUtils {
 
@@ -52,12 +51,12 @@ public class TmdbJsonUtils {
     private static final String TMDB_MOVIE_OVERVIEW = "overview";
 
 
-    public static TmdbConfig getConfigFromJson(Context context, String tmdbConfigJsonString) {
+    public static TmdbApi.Config getConfigFromJson(Context context, String tmdbConfigJsonString) {
 
         // Load mock data for testing
         tmdbConfigJsonString = MockDataUtils.getMockJson(context, "mock_configuration");
 
-        TmdbConfig tmdbConfig = new TmdbConfig();
+        TmdbApi.Config tmdbConfig = new TmdbApi.Config();
 
         try {
             JSONObject tmdbConfigJson = new JSONObject(tmdbConfigJsonString);
@@ -86,12 +85,12 @@ public class TmdbJsonUtils {
         return tmdbConfig;
     }
 
-    public static List<TmdbMovie> getMovieListFromJson(Context context, String tmdbMovieJsonString) {
+    public static List<TmdbApi.Movie> getMovieListFromJson(Context context, String tmdbMovieJsonString) {
 
         // Load mock data for testing
         tmdbMovieJsonString = MockDataUtils.getMockJson(context, "mock_popular");
 
-        List<TmdbMovie> movies = new ArrayList<>();
+        List<TmdbApi.Movie> movies = new ArrayList<>();
 
         try {
             JSONObject movieJson = new JSONObject(tmdbMovieJsonString);
