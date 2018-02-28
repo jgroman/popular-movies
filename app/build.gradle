@@ -33,6 +33,8 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     // Preference fragment support
     compile 'com.android.support:preference-v7:26.1.0'
+    // RecyclerView support
+    compile 'com.android.support:recyclerview-v7:26.1.0'
     // External library Picasso for image handling
     compile 'com.squareup.picasso:picasso:2.5.2'
     testImplementation 'junit:junit:4.12'

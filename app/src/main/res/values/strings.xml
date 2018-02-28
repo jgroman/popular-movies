@@ -1,8 +1,12 @@
 <resources>
     <string name="app_name">Popular Movies</string>
 
+    <!-- Main view -->
+    <string name="error_message">Generic error</string>
+
     <string name="action_settings">Settings</string>
 
+    <!-- Preferences -->
     <string name="pref_sort_order_title">Sort Order</string>
     <string name="pref_sort_order_dialog">Select Sort Order</string>
     <string name="pref_sort_order_most_popular">Most Popular</string>
