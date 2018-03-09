@@ -51,6 +51,8 @@ public class MainActivity
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
+    private TmdbData mTmdbData;
+
     private RecyclerView mRecyclerView;
     private TextView mErrorMessage;
     private ProgressBar mLoadingIndicator;
@@ -59,7 +61,15 @@ public class MainActivity
 
     private static final int MOVIELIST_LOADER_ID = 0;
 
-    // Bundle
+    // Movie detail activity extras
+    public static final String EXTRA_DETAIL_TITLE = "title";
+    public static final String EXTRA_DETAIL_RELEASE_DATE = "release";
+    public static final String EXTRA_DETAIL_OVERVIEW = "overview";
+    public static final String EXTRA_DETAIL_VOTE_AVERAGE = "vote_average";
+    public static final String EXTRA_DETAIL_POSTER_URL = "poster_url";
+
+
+    // AsyncLoader Bundle
     private static final String BUNDLE_KEY_PAGE = "page";
     private int mApiResultsPageToLoad = 1;
 
@@ -118,9 +128,26 @@ public class MainActivity
         return super.onOptionsItemSelected(item);
     }
 
+
+    /**
+     * This method responds to clicks on movie grid items - opens movie detail activity
+     *
+     * @param itemId Id of clicked-on item
+     */
     @Override
     public void onClick(int itemId) {
+        Intent intent = new Intent(this, MovieDetailActivity.class);
 
+        TmdbData.Movie movie = mTmdbData.getMovieList().get(itemId);
+        String secureBaseUrl = mTmdbData.getConfig().getSecureBaseUrl();
+
+        intent.putExtra(EXTRA_DETAIL_TITLE, movie.getTitle());
+        intent.putExtra(EXTRA_DETAIL_OVERVIEW, movie.getOverview());
+        intent.putExtra(EXTRA_DETAIL_POSTER_URL, secureBaseUrl + movie.getPosterPath());
+        intent.putExtra(EXTRA_DETAIL_RELEASE_DATE, movie.getReleaseDate());
+        intent.putExtra(EXTRA_DETAIL_VOTE_AVERAGE, movie.getVoteAverage());
+
+        startActivity(intent);
     }
 
     @Override
@@ -140,6 +167,7 @@ public class MainActivity
         Log.d(TAG, "Load finished");
         mLoadingIndicator.setVisibility(View.INVISIBLE);
         mMovieGridAdapter.setMovieData(tmdbData);
+        mTmdbData = tmdbData;
 
         if (null == tmdbData) {
             showErrorMessage();
@@ -165,6 +193,7 @@ public class MainActivity
      */
     private void invalidateData() {
         mMovieGridAdapter.setMovieData(null);
+        mTmdbData = null;
     }
 
     /**
@@ -256,7 +285,6 @@ public class MainActivity
                     String jsonConfig = MockDataUtils.getMockJson(getContext(), "mock_configuration");
 
                     TmdbJsonUtils.getConfigFromJson(mTmdbData, jsonConfig);
-                    Log.d(TAG, mTmdbData.getConfig().getSecureBaseUrl());
                 }
 
                 // Load movie result page
@@ -265,7 +293,6 @@ public class MainActivity
                 String jsonMovies = MockDataUtils.getMockJson(getContext(), "mock_popular");
 
                 TmdbJsonUtils.getMovieListFromJson(mTmdbData, jsonMovies);
-                Log.d(TAG, mTmdbData.getMovieList().get(0).getTitle());
 
                 return mTmdbData;
 
