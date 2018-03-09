@@ -31,7 +31,7 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
         void onClick(int itemId);
     }
 
-    private List<TmdbApi.Movie> mMovieList;
+    private List<TmdbData.Movie> mMovieList;
     final private MovieGridOnClickHandler mClickHandler;
 
 
@@ -45,7 +45,9 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
         mClickHandler = clickHandler;
     }
 
-    public class MovieGridAdapterViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public class MovieGridAdapterViewHolder
+            extends RecyclerView.ViewHolder
+            implements View.OnClickListener {
 
         public final TextView mMovieTextView;
 
@@ -56,6 +58,11 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
             view.setOnClickListener(this);
         }
 
+        /**
+         * This gets called by the child views during a click.
+         *
+         * @param view The View that was clicked
+         */
         @Override
         public void onClick(View view) {
             int itemPos = getAdapterPosition();
@@ -63,6 +70,17 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
         }
     }
 
+    /**
+     * This gets called when each new ViewHolder is created. This happens when the RecyclerView
+     * is laid out. Enough ViewHolders will be created to fill the screen and allow for scrolling.
+     *
+     * @param parent   The ViewGroup that these ViewHolders are contained within.
+     * @param viewType If your RecyclerView has more than one type of item (which ours doesn't) you
+     *                  can use this viewType integer to provide a different layout. See
+     *                  {@link android.support.v7.widget.RecyclerView.Adapter#getItemViewType(int)}
+     *                  for more details.
+     * @return A new MovieGridAdapterViewHolder that holds the View for each list item
+     */
     @Override
     public MovieGridAdapterViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         Context context = parent.getContext();
@@ -75,15 +93,40 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
         return new MovieGridAdapterViewHolder(view);
     }
 
+    /**
+     * OnBindViewHolder is called by the RecyclerView to display the data at the specified
+     * position. In this method, we update the contents of the ViewHolder to display the movie
+     * data for this particular position addressed by "position" parameter.
+     *
+     * @param holder    The ViewHolder which should be updated to represent the
+     *                   contents of the item at the given position in the data set.
+     * @param position  The position of the item within the adapter's data set.
+     */
     @Override
     public void onBindViewHolder(MovieGridAdapterViewHolder holder, int position) {
         String itemText = mMovieList.get(position).getTitle();
         holder.mMovieTextView.setText(itemText);
     }
 
+    /**
+     * This method returns the number of items to display.
+     *
+     * @return The number of items available in our forecast
+     */
     @Override
     public int getItemCount() {
         if (null == mMovieList) return 0;
         return mMovieList.size();
+    }
+
+    /**
+     * This method is used to set the movie data on a MovieGridAdapter if we've already
+     * created one.
+     *
+     * @param tmdbData The new movie data to be displayed.
+     */
+    public void setMovieData(TmdbData tmdbData) {
+        mMovieList = tmdbData.getMovieList();
+        notifyDataSetChanged();
     }
 }

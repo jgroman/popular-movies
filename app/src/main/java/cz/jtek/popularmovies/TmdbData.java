@@ -16,21 +16,45 @@
 
 package cz.jtek.popularmovies;
 
-public class TmdbApi {
+import java.util.ArrayList;
+import java.util.List;
 
-    // API Status Codes
+public class TmdbData {
+
+    // API Status
     // https://www.themoviedb.org/documentation/api/status-codes
-    public static class Status {
-        // JSON object names
-        public static final String STATUS_CODE = "status_code";
-        public static final String STATUS_MSG = "status_message";
+    public static final String STATUS_CODE = "status_code";
+    public static final String STATUS_MSG = "status_message";
+
+    // API Configuration
+    public static final String CONFIG_IMAGES = "images";
+    public static final String CONFIG_SECURE_BASE_URL = "secure_base_url";
+
+    // API Movie
+    public static final String MOVIE_RESULTS = "results";
+    public static final String MOVIE_TITLE = "title";
+    public static final String MOVIE_RELEASE_DATE = "release_date";
+    public static final String MOVIE_POSTER_PATH = "poster_path";
+    public static final String MOVIE_VOTE_AVERAGE = "vote_average";
+    public static final String MOVIE_OVERVIEW = "overview";
+
+    private TmdbData.Config mConfig;
+    private List<Movie> mMovieList;
+
+    public TmdbData() {
+        mConfig = new Config();
+        mMovieList = new ArrayList<>();
+    }
+
+    public TmdbData.Config getConfig() {
+        return mConfig;
+    }
+
+    public List<Movie> getMovieList() {
+        return mMovieList;
     }
 
     public static class Config {
-        // JSON object names
-        public static final String IMAGES = "images";
-        public static final String SECURE_BASE_URL = "secure_base_url";
-
         private String mSecureBaseUrl;
 
         public String getSecureBaseUrl() {
@@ -43,13 +67,6 @@ public class TmdbApi {
     }
 
     public static class Movie {
-        // JSON object names
-        public static final String RESULTS = "results";
-        public static final String TITLE = "title";
-        public static final String RELEASE_DATE = "release_date";
-        public static final String POSTER_PATH = "poster_path";
-        public static final String VOTE_AVERAGE = "vote_average";
-        public static final String OVERVIEW = "overview";
 
         private int mVoteCount;
         private int mId;

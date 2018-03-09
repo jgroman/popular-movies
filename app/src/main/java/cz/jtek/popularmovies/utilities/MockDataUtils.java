@@ -26,7 +26,7 @@ public class MockDataUtils {
 
     private static final String TAG = MockDataUtils.class.getSimpleName();
 
-    private static String readFile(InputStream inputStream) {
+    private static String readFile(InputStream inputStream) throws IOException {
         StringBuilder sb = new StringBuilder();
         int readLen;
 
@@ -45,7 +45,7 @@ public class MockDataUtils {
         return sb.toString();
     }
 
-    public static String getMockJson(Context context, String fileName) {
+    public static String getMockJson(Context context, String fileName) throws IOException {
         InputStream inputStream = context.getResources().openRawResource(
                 context.getResources().getIdentifier(fileName, "raw", context.getPackageName())
         );
