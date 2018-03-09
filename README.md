@@ -15,7 +15,7 @@ __How to store your own key:__
 
 Failing to do so, you will not be able to build the app.
 
-##External libraries used:
+## External libraries used:
 Picasso - http://square.github.io/picasso/
 
 
