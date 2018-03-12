@@ -75,12 +75,16 @@ public class MainActivity
     public static final String EXTRA_DETAIL_VOTE_AVERAGE = "vote_average";
     public static final String EXTRA_DETAIL_POSTER_URL = "poster_url";
 
+    // Shared preferences
+    public static final String PREF_KEY_SORT_ORDER = "pref_key_sort_order_list";
+
 
     // AsyncLoader Bundle
-    private static final String BUNDLE_KEY_PAGE = "page";
+    private static final String LOADER_BUNDLE_KEY_PAGE = "page";
+    private static final String LOADER_BUNDLE_KEY_SORT_ORDER = "sort-order";
     private int mApiResultsPageToLoad = 1;
 
-    private static boolean WERE_PREFERENCES_UPDATED = false;
+    private static boolean prefsWereUpdated = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,52 +107,66 @@ public class MainActivity
         // Layout
         GridLayoutManager layoutManager = new GridLayoutManager(this, gridColumns);
         mRecyclerView.setLayoutManager(layoutManager);
-
         mRecyclerView.setHasFixedSize(true);
 
-
         mMovieGridAdapter = new MovieGridAdapter(this);
-
         mRecyclerView.setAdapter(mMovieGridAdapter);
+
+        // Shared Preferences and preference change listener
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        sp.registerOnSharedPreferenceChangeListener(this);
 
         // Loader
         LoaderManager.LoaderCallbacks<TmdbData> loaderCallbacks = MainActivity.this;
 
-        Bundle loaderBundle = new Bundle();
-        loaderBundle.putInt(BUNDLE_KEY_PAGE, mApiResultsPageToLoad);
-
-        getSupportLoaderManager().initLoader(MOVIELIST_LOADER_ID, loaderBundle, loaderCallbacks);
-
-        // Preference
-        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
-
+        Bundle loaderArgsBundle = new Bundle();
+        // Store results page into loader args bundle
+        loaderArgsBundle.putInt(LOADER_BUNDLE_KEY_PAGE, mApiResultsPageToLoad);
+        // Store results sort order into loader args bundle
+        String defaultSortOrder = getResources().getString(R.string.pref_sort_order_top_rated);
+        String prefSortOrder = sp.getString(PREF_KEY_SORT_ORDER, defaultSortOrder);
+        loaderArgsBundle.putString(LOADER_BUNDLE_KEY_SORT_ORDER, prefSortOrder);
+        // Prepare loader
+        getSupportLoaderManager().initLoader(MOVIELIST_LOADER_ID, loaderArgsBundle, loaderCallbacks);
 
     }
 
-    private int getDisplayWidth(Context context) {
-
-        int width;
-        Display display;
-
-        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-
-        try {
-            display = wm.getDefaultDisplay();
-        } catch (NullPointerException npe) {
-            Log.e(TAG, "Null pointer exception on getDefaultDisplay().");
-            return 0;
-        }
-
-        if (android.os.Build.VERSION.SDK_INT >= 13) {
-            Point size = new Point();
-            display.getSize(size);
-            width = size.x;
-        } else {
-            width = display.getWidth();  // deprecated
-        }
-
-        return width;
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        prefsWereUpdated = true;
     }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        if (prefsWereUpdated) {
+            prefsWereUpdated = false;
+
+            // On preference change restart loading results from page 1
+            mApiResultsPageToLoad = 1;
+
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            Bundle loaderArgsBundle = new Bundle();
+            // Store results page into loader args bundle
+            loaderArgsBundle.putInt(LOADER_BUNDLE_KEY_PAGE, mApiResultsPageToLoad);
+            // Store results sort order into loader args bundle
+            String defaultSortOrder = getResources().getString(R.string.pref_sort_order_top_rated);
+            String prefSortOrder = sp.getString(PREF_KEY_SORT_ORDER, defaultSortOrder);
+            loaderArgsBundle.putString(LOADER_BUNDLE_KEY_SORT_ORDER, prefSortOrder);
+
+            getSupportLoaderManager().restartLoader(MOVIELIST_LOADER_ID, loaderArgsBundle, MainActivity.this);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Unregister this activity as shared preference change listener
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        sp.unregisterOnSharedPreferenceChangeListener(this);
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -206,7 +224,6 @@ public class MainActivity
      */
     @Override
     public void onLoadFinished(Loader<TmdbData> loader, TmdbData tmdbData) {
-        Log.d(TAG, "Load finished");
         mLoadingIndicator.setVisibility(View.INVISIBLE);
         mMovieGridAdapter.setMovieData(tmdbData);
         mTmdbData = tmdbData;
@@ -227,7 +244,7 @@ public class MainActivity
      */
     @Override
     public void onLoaderReset(Loader<TmdbData> loader) {
-        // This method is not used but it is required to be overridden
+        // This method is not used but it is required to be present and overridden
     }
 
     /**
@@ -266,18 +283,41 @@ public class MainActivity
         mErrorMessage.setVisibility(View.VISIBLE);
     }
 
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+    /**
+     * This method returns display width
+     *
+     * @param context Context
+     * @return Display width
+     */
+    private int getDisplayWidth(Context context) {
 
+        int width;
+        Display display;
+
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+
+        try {
+            display = wm.getDefaultDisplay();
+        } catch (NullPointerException npe) {
+            Log.e(TAG, "Null pointer exception on getDefaultDisplay().");
+            return 0;
+        }
+
+        if (android.os.Build.VERSION.SDK_INT >= 13) {
+            Point size = new Point();
+            display.getSize(size);
+            width = size.x;
+        } else {
+            width = display.getWidth();  // deprecated
+        }
+
+        return width;
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
 
-
-
+    /**
+     *
+     */
     public static class TmdbDataLoader extends AsyncTaskLoader<TmdbData> {
 
         final PackageManager mPackageManager;
@@ -314,9 +354,11 @@ public class MainActivity
         public TmdbData loadInBackground() {
 
             // Get API results page to load from bundle
-            int movieResultPage = mArgs.getInt(BUNDLE_KEY_PAGE, 1);
+            int movieResultPage = mArgs.getInt(LOADER_BUNDLE_KEY_PAGE, 1);
+            // Get sort order from bundle
+            String sortOrder = mArgs.getString(LOADER_BUNDLE_KEY_SORT_ORDER);
 
-            Log.d(TAG, "Load in background, page: " + movieResultPage);
+            Log.d(TAG, "Load in background, page: " + movieResultPage + ", sort order: " + sortOrder);
 
             try {
                 // On loading first result page also load current API configuration
@@ -330,7 +372,7 @@ public class MainActivity
                 }
 
                 // Load movie result page
-                URL movieUrl = NetworkUtils.buildMovieUrl(getContext(), null, movieResultPage);
+                URL movieUrl = NetworkUtils.buildMovieUrl(getContext(), sortOrder, movieResultPage);
                 //String jsonMovies = NetworkUtils.getResponseFromHttpUrl(movieUrl);
                 String jsonMovies = MockDataUtils.getMockJson(getContext(), "mock_popular");
 
