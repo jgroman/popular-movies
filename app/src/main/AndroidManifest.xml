@@ -3,6 +3,10 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     package="cz.jtek.popularmovies">
 
+    <!-- Permission to check if network connection exists -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Permission to access network -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <application

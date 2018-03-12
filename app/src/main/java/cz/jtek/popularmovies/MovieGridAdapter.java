@@ -18,9 +18,11 @@ package cz.jtek.popularmovies;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.List;
@@ -31,7 +33,11 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
         void onClick(int itemId);
     }
 
+    private static final String TAG = MovieGridAdapter.class.getSimpleName();
+
     private List<TmdbData.Movie> mMovieList;
+    private TmdbData.Config mTmdbConfig;
+
     final private MovieGridOnClickHandler mClickHandler;
 
 
@@ -50,11 +56,13 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
             implements View.OnClickListener {
 
         public final TextView mMovieTextView;
+        public final ImageView mMoviePoster;
 
         // Attach OnClick listener when creating view
         public MovieGridAdapterViewHolder(View view) {
             super(view);
-            mMovieTextView = (TextView) view.findViewById(R.id.tv_movie_item);
+            mMovieTextView = view.findViewById(R.id.tv_movie_item);
+            mMoviePoster = view.findViewById(R.id.iv_movie_item_poster);
             view.setOnClickListener(this);
         }
 
@@ -104,7 +112,13 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
      */
     @Override
     public void onBindViewHolder(MovieGridAdapterViewHolder holder, int position) {
+        String posterBaseUrl = mTmdbConfig.getSecureBaseUrl() + mTmdbConfig.getPosterSize();
+        String posterPath = mMovieList.get(position).getPosterPath();
+
         String itemText = mMovieList.get(position).getTitle();
+
+        Log.d(TAG, "posterUrl: " + posterBaseUrl + posterPath);
+
         holder.mMovieTextView.setText(itemText);
     }
 
@@ -127,6 +141,7 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
      */
     public void setMovieData(TmdbData tmdbData) {
         mMovieList = tmdbData.getMovieList();
+        mTmdbConfig = tmdbData.getConfig();
         notifyDataSetChanged();
     }
 }

@@ -30,6 +30,8 @@ public class TmdbData {
     public static final String CONFIG_IMAGES = "images";
     public static final String CONFIG_SECURE_BASE_URL = "secure_base_url";
 
+    public static final String DEFAULT_IMAGE_SIZE = "w185";
+
     // API Movie
     public static final String MOVIE_RESULTS = "results";
     public static final String MOVIE_TITLE = "title";
@@ -64,6 +66,8 @@ public class TmdbData {
         public void setSecureBaseUrl(String url) {
             mSecureBaseUrl = url;
         }
+
+        public String getPosterSize() { return DEFAULT_IMAGE_SIZE; }
     }
 
     public static class Movie {
