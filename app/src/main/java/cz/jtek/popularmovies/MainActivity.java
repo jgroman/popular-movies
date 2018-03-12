@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Point;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
@@ -29,10 +30,12 @@ import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -56,6 +59,10 @@ public class MainActivity
     private RecyclerView mRecyclerView;
     private TextView mErrorMessage;
     private ProgressBar mLoadingIndicator;
+
+    // Default number of columns in grid
+    private static final int DEFAULT_GRID_COLUMNS = 3;
+    private static final int DEFAULT_MOVIE_POSTER_WIDTH = 185;
 
     private MovieGridAdapter mMovieGridAdapter;
 
@@ -84,11 +91,21 @@ public class MainActivity
         mErrorMessage = findViewById(R.id.tv_error_message);
         mLoadingIndicator = findViewById(R.id.pb_loading);
 
+        // Our grid layout uses full display width
+        int displayWidth = getDisplayWidth(this);
+
+        // Calculate number of columns in grid
+        int gridColumns = DEFAULT_GRID_COLUMNS;
+        if (displayWidth > 0) {
+            gridColumns = displayWidth / DEFAULT_MOVIE_POSTER_WIDTH;
+        }
+
         // Layout
-        GridLayoutManager layoutManager = new GridLayoutManager(this, 3);
+        GridLayoutManager layoutManager = new GridLayoutManager(this, gridColumns);
         mRecyclerView.setLayoutManager(layoutManager);
 
         mRecyclerView.setHasFixedSize(true);
+
 
         mMovieGridAdapter = new MovieGridAdapter(this);
 
@@ -106,6 +123,31 @@ public class MainActivity
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
 
 
+    }
+
+    private int getDisplayWidth(Context context) {
+
+        int width;
+        Display display;
+
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+
+        try {
+            display = wm.getDefaultDisplay();
+        } catch (NullPointerException npe) {
+            Log.e(TAG, "Null pointer exception on getDefaultDisplay().");
+            return 0;
+        }
+
+        if (android.os.Build.VERSION.SDK_INT >= 13) {
+            Point size = new Point();
+            display.getSize(size);
+            width = size.x;
+        } else {
+            width = display.getWidth();  // deprecated
+        }
+
+        return width;
     }
 
     @Override
