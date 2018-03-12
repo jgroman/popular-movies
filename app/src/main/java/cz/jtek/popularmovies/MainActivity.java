@@ -65,6 +65,7 @@ public class MainActivity
     // Default number of columns in grid
     private static final int DEFAULT_GRID_COLUMNS = 3;
     private static final int DEFAULT_MOVIE_POSTER_WIDTH = 185;
+    private static final int DEFAULT_MOVIE_POSTER_HEIGHT = 278;
 
     private MovieGridAdapter mMovieGridAdapter;
 
@@ -104,33 +105,44 @@ public class MainActivity
         int gridColumns = DEFAULT_GRID_COLUMNS;
         if (displayWidth > 0) {
             gridColumns = displayWidth / DEFAULT_MOVIE_POSTER_WIDTH;
+            // TODO Calculate resize factor and apply to both image sizes
+            //double resizeFactor = (((double) displayWidth / (double) DEFAULT_MOVIE_POSTER_WIDTH) - gridColumns) * (double) DEFAULT_MOVIE_POSTER_WIDTH;
+
+            //Log.d(TAG, "Resize: " + resizeFactor);
         }
+
+
 
         // Layout
         GridLayoutManager layoutManager = new GridLayoutManager(this, gridColumns);
         mRecyclerView.setLayoutManager(layoutManager);
         mRecyclerView.setHasFixedSize(true);
 
-        mMovieGridAdapter = new MovieGridAdapter(this);
+        mMovieGridAdapter = new MovieGridAdapter(this, this);
         mRecyclerView.setAdapter(mMovieGridAdapter);
 
         // Shared Preferences and preference change listener
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         sp.registerOnSharedPreferenceChangeListener(this);
 
-        // Loader
-        LoaderManager.LoaderCallbacks<TmdbData> loaderCallbacks = MainActivity.this;
+        // Check for network availability
+        if (!isNetworkAvailable()) {
+            // Network is not available
+            showErrorMessage(getResources().getString(R.string.error_msg_no_network));
+        } else {
+            // Loader
+            LoaderManager.LoaderCallbacks<TmdbData> loaderCallbacks = MainActivity.this;
 
-        Bundle loaderArgsBundle = new Bundle();
-        // Store results page into loader args bundle
-        loaderArgsBundle.putInt(LOADER_BUNDLE_KEY_PAGE, mApiResultsPageToLoad);
-        // Store results sort order into loader args bundle
-        String defaultSortOrder = getResources().getString(R.string.pref_sort_order_top_rated);
-        String prefSortOrder = sp.getString(PREF_KEY_SORT_ORDER, defaultSortOrder);
-        loaderArgsBundle.putString(LOADER_BUNDLE_KEY_SORT_ORDER, prefSortOrder);
-        // Prepare loader
-        getSupportLoaderManager().initLoader(MOVIELIST_LOADER_ID, loaderArgsBundle, loaderCallbacks);
-
+            Bundle loaderArgsBundle = new Bundle();
+            // Store results page into loader args bundle
+            loaderArgsBundle.putInt(LOADER_BUNDLE_KEY_PAGE, mApiResultsPageToLoad);
+            // Store results sort order into loader args bundle
+            String defaultSortOrder = getResources().getString(R.string.pref_sort_order_top_rated);
+            String prefSortOrder = sp.getString(PREF_KEY_SORT_ORDER, defaultSortOrder);
+            loaderArgsBundle.putString(LOADER_BUNDLE_KEY_SORT_ORDER, prefSortOrder);
+            // Prepare loader
+            getSupportLoaderManager().initLoader(MOVIELIST_LOADER_ID, loaderArgsBundle, loaderCallbacks);
+        }
     }
 
     @Override
@@ -148,16 +160,23 @@ public class MainActivity
             // On preference change restart loading results from page 1
             mApiResultsPageToLoad = 1;
 
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-            Bundle loaderArgsBundle = new Bundle();
-            // Store results page into loader args bundle
-            loaderArgsBundle.putInt(LOADER_BUNDLE_KEY_PAGE, mApiResultsPageToLoad);
-            // Store results sort order into loader args bundle
-            String defaultSortOrder = getResources().getString(R.string.pref_sort_order_top_rated);
-            String prefSortOrder = sp.getString(PREF_KEY_SORT_ORDER, defaultSortOrder);
-            loaderArgsBundle.putString(LOADER_BUNDLE_KEY_SORT_ORDER, prefSortOrder);
+            // Check for network availability
+            if (!isNetworkAvailable()) {
+                // Network is not available
+                showErrorMessage(getResources().getString(R.string.error_msg_no_network));
+            } else {
 
-            getSupportLoaderManager().restartLoader(MOVIELIST_LOADER_ID, loaderArgsBundle, MainActivity.this);
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+                Bundle loaderArgsBundle = new Bundle();
+                // Store results page into loader args bundle
+                loaderArgsBundle.putInt(LOADER_BUNDLE_KEY_PAGE, mApiResultsPageToLoad);
+                // Store results sort order into loader args bundle
+                String defaultSortOrder = getResources().getString(R.string.pref_sort_order_top_rated);
+                String prefSortOrder = sp.getString(PREF_KEY_SORT_ORDER, defaultSortOrder);
+                loaderArgsBundle.putString(LOADER_BUNDLE_KEY_SORT_ORDER, prefSortOrder);
+
+                getSupportLoaderManager().restartLoader(MOVIELIST_LOADER_ID, loaderArgsBundle, MainActivity.this);
+            }
         }
     }
 
@@ -231,7 +250,7 @@ public class MainActivity
         mTmdbData = tmdbData;
 
         if (null == tmdbData) {
-            showErrorMessage();
+            showErrorMessage(getResources().getString(R.string.error_msg_no_data));
         } else {
             showMovieDataView();
         }
@@ -271,11 +290,15 @@ public class MainActivity
     /**
      * This method will make the error message visible and hide the movie grid.
      */
-    private void showErrorMessage() {
+    private void showErrorMessage(String errorMessage) {
         // Hide movie grid
         mRecyclerView.setVisibility(View.INVISIBLE);
         // Display error message
         mErrorMessage.setVisibility(View.VISIBLE);
+
+        if (errorMessage != null && errorMessage.length() > 0) {
+            mErrorMessage.setText(errorMessage);
+        }
     }
 
     /**
@@ -286,27 +309,35 @@ public class MainActivity
      */
     private int getDisplayWidth(Context context) {
 
-        int width;
+        int width = 0;
         Display display;
 
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
 
-        try {
+        if (wm != null) {
             display = wm.getDefaultDisplay();
-        } catch (NullPointerException npe) {
-            Log.e(TAG, "Null pointer exception on getDefaultDisplay().");
-            return 0;
-        }
 
-        if (android.os.Build.VERSION.SDK_INT >= 13) {
-            Point size = new Point();
-            display.getSize(size);
-            width = size.x;
-        } else {
-            width = display.getWidth();  // deprecated
+            if (android.os.Build.VERSION.SDK_INT >= 13) {
+                Point size = new Point();
+                display.getSize(size);
+                width = size.x;
+            } else {
+                width = display.getWidth();  // deprecated
+            }
         }
 
         return width;
+    }
+
+    public boolean isNetworkAvailable() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        if (cm != null) {
+            NetworkInfo netInfo = cm.getActiveNetworkInfo();
+            return netInfo != null && netInfo.isConnected();
+        }
+
+        return false;
     }
 
 

@@ -3,6 +3,8 @@
 
     <!-- Main view -->
     <string name="error_message">Generic error</string>
+    <string name="error_msg_no_network">Network is not available</string>
+    <string name="error_msg_no_data">No data available</string>
 
     <string name="action_settings">Settings</string>
 

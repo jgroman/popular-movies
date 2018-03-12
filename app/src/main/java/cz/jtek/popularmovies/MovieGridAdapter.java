@@ -25,6 +25,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
 import java.util.List;
 
 public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.MovieGridAdapterViewHolder> {
@@ -38,6 +40,8 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
     private List<TmdbData.Movie> mMovieList;
     private TmdbData.Config mTmdbConfig;
 
+    private Context mContext;
+
     final private MovieGridOnClickHandler mClickHandler;
 
 
@@ -47,22 +51,24 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
      * @param clickHandler OnClick handler for this adapter. It is called when grid item is clicked.
      *
      */
-    public MovieGridAdapter(MovieGridOnClickHandler clickHandler) {
+    public MovieGridAdapter(Context context, MovieGridOnClickHandler clickHandler) {
         mClickHandler = clickHandler;
+        mContext = null;
     }
 
     public class MovieGridAdapterViewHolder
             extends RecyclerView.ViewHolder
             implements View.OnClickListener {
 
-        public final TextView mMovieTextView;
-        public final ImageView mMoviePoster;
+
+        //public final TextView mMovieTextView;
+        public final ImageView mMoviePosterImageView;
 
         // Attach OnClick listener when creating view
         public MovieGridAdapterViewHolder(View view) {
             super(view);
-            mMovieTextView = view.findViewById(R.id.tv_movie_item);
-            mMoviePoster = view.findViewById(R.id.iv_movie_item_poster);
+            //mMovieTextView = view.findViewById(R.id.tv_movie_item_title);
+            mMoviePosterImageView = view.findViewById(R.id.iv_movie_item_poster);
             view.setOnClickListener(this);
         }
 
@@ -92,6 +98,7 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
     @Override
     public MovieGridAdapterViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         Context context = parent.getContext();
+        mContext = context;
         int gridItemLayoutId = R.layout.movie_recycler_item;
 
         LayoutInflater inflater = LayoutInflater.from(context);
@@ -115,11 +122,13 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
         String posterBaseUrl = mTmdbConfig.getSecureBaseUrl() + mTmdbConfig.getPosterSize();
         String posterPath = mMovieList.get(position).getPosterPath();
 
-        String itemText = mMovieList.get(position).getTitle();
-
         Log.d(TAG, "posterUrl: " + posterBaseUrl + posterPath);
 
-        holder.mMovieTextView.setText(itemText);
+        Picasso.with(mContext)
+                .load(posterBaseUrl + posterPath)
+                //.fit()
+                //.centerCrop()
+                .into(holder.mMoviePosterImageView);
     }
 
     /**
@@ -140,8 +149,10 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
      * @param tmdbData The new movie data to be displayed.
      */
     public void setMovieData(TmdbData tmdbData) {
-        mMovieList = tmdbData.getMovieList();
-        mTmdbConfig = tmdbData.getConfig();
-        notifyDataSetChanged();
+        if (tmdbData != null) {
+            mMovieList = tmdbData.getMovieList();
+            mTmdbConfig = tmdbData.getConfig();
+            notifyDataSetChanged();
+        }
     }
 }
