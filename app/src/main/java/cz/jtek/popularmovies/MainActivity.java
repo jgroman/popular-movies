@@ -16,6 +16,7 @@
 
 package cz.jtek.popularmovies;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -72,7 +73,7 @@ public class MainActivity
     public static final String EXTRA_DETAIL_POSTER_URL = "poster_url";
 
     // Shared preferences
-    public static final String PREF_KEY_SORT_ORDER = "pref_key_sort_order_list";
+    private static final String PREF_KEY_SORT_ORDER = "pref_key_sort_order_list";
     private static boolean prefsUpdatedFlag = false;
 
     // AsyncLoader
@@ -310,6 +311,7 @@ public class MainActivity
      * @param context Context
      * @return Display width
      */
+    @SuppressLint("ObsoleteSdkInt")
     private int getDisplayWidth(Context context) {
 
         int width = 0;
@@ -337,7 +339,7 @@ public class MainActivity
      *
      * @return true if network connection available
      */
-    public boolean isNetworkAvailable() {
+    private boolean isNetworkAvailable() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
         if (cm != null) {
@@ -355,8 +357,8 @@ public class MainActivity
     public static class TmdbDataLoader extends AsyncTaskLoader<TmdbData> {
 
         final PackageManager mPackageManager;
-        TmdbData mTmdbData = new TmdbData();
-        Bundle mArgs;
+        final TmdbData mTmdbData = new TmdbData();
+        final Bundle mArgs;
 
 
         private TmdbDataLoader(Context context, Bundle args) {

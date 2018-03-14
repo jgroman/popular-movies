@@ -42,9 +42,9 @@ public class TmdbData {
     public static final String MOVIE_VOTE_AVERAGE = "vote_average";
     public static final String MOVIE_OVERVIEW = "overview";
 
-    private TmdbData.Config mConfig;
-    private List<Movie> mMovieList;
-    private Status mStatus;
+    final private TmdbData.Config mConfig;
+    final private List<Movie> mMovieList;
+    final private Status mStatus;
 
     TmdbData() {
         mStatus = new Status();

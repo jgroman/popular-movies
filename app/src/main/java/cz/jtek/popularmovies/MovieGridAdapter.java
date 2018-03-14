@@ -38,7 +38,7 @@ public class MovieGridAdapter
     private TmdbData.Config mTmdbConfig;
 
     private Context mContext;
-    private int mRequestedWidth, mRequestedHeight;
+    final private int mRequestedWidth, mRequestedHeight;
 
     final private MovieGridOnClickHandler mClickHandler;
 
