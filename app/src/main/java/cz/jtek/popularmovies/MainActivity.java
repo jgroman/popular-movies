@@ -44,7 +44,6 @@ import android.widget.TextView;
 import java.io.IOException;
 import java.net.URL;
 
-import cz.jtek.popularmovies.utilities.MockDataUtils;
 import cz.jtek.popularmovies.utilities.NetworkUtils;
 import cz.jtek.popularmovies.utilities.TmdbJsonUtils;
 
@@ -57,14 +56,12 @@ public class MainActivity
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private TmdbData mTmdbData;
-
     private RecyclerView mRecyclerView;
     private TextView mErrorMessage;
     private ProgressBar mLoadingIndicator;
 
-    // Default number of columns in grid
+    // Grid Adapter
     private static final int DEFAULT_GRID_COLUMNS = 3;
-
     private MovieGridAdapter mMovieGridAdapter;
 
     // Movie detail activity extras
@@ -103,6 +100,11 @@ public class MainActivity
         if (displayWidth > 0) {
             // Number of columns which fits into current display width
             gridColumns = displayWidth / TmdbData.Config.getPosterWidth();
+
+            if (gridColumns < 1) {
+                gridColumns = 1;
+            }
+
             // Optimal column width to fill all available space
             optimalWidth = displayWidth / gridColumns;
             // Factor to resize original image with
@@ -136,7 +138,7 @@ public class MainActivity
             // Store results page into loader args bundle
             loaderArgsBundle.putInt(LOADER_BUNDLE_KEY_PAGE, mApiResultsPageToLoad);
             // Store results sort order into loader args bundle
-            String defaultSortOrder = getResources().getString(R.string.pref_sort_order_top_rated);
+            String defaultSortOrder = getResources().getString(R.string.pref_sort_order_most_popular);
             String prefSortOrder = sp.getString(PREF_KEY_SORT_ORDER, defaultSortOrder);
             loaderArgsBundle.putString(LOADER_BUNDLE_KEY_SORT_ORDER, prefSortOrder);
             // Prepare loader
@@ -144,6 +146,12 @@ public class MainActivity
         }
     }
 
+    /**
+     * Shared preference change listener. On preference change sets global flag.
+     *
+     * @param sharedPreferences Shared preferences
+     * @param s
+     */
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         prefsUpdatedFlag = true;
@@ -249,7 +257,11 @@ public class MainActivity
         mTmdbData = tmdbData;
 
         if (null == tmdbData) {
+            // No data received
             showErrorMessage(getResources().getString(R.string.error_msg_no_data));
+        } else if (!tmdbData.getStatus().getDataValid()) {
+            // API error
+            showErrorMessage(tmdbData.getStatus().getStatusMessage());
         } else {
             showMovieDataView();
         }
@@ -265,14 +277,6 @@ public class MainActivity
     @Override
     public void onLoaderReset(Loader<TmdbData> loader) {
         // This method is not used but it is required to be present and overridden
-    }
-
-    /**
-     * This method is used for resetting movie grid adapter contents.
-     */
-    private void invalidateData() {
-        mMovieGridAdapter.setMovieData(null);
-        mTmdbData = null;
     }
 
     /**
@@ -301,7 +305,7 @@ public class MainActivity
     }
 
     /**
-     * This method returns display width
+     * This method returns device display width
      *
      * @param context Context
      * @return Display width
@@ -328,6 +332,11 @@ public class MainActivity
         return width;
     }
 
+    /**
+     * This method test for network availability
+     *
+     * @return true if network connection available
+     */
     public boolean isNetworkAvailable() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -341,7 +350,7 @@ public class MainActivity
 
 
     /**
-     *
+     * TMDb API data async task loader implementation
      */
     public static class TmdbDataLoader extends AsyncTaskLoader<TmdbData> {
 
@@ -358,7 +367,7 @@ public class MainActivity
 
         @Override
         protected void onStartLoading() {
-            if (mTmdbData.getMovieList().size() != 0) {
+            if (mTmdbData.getMovieList().size() != 0 || !mTmdbData.getStatus().getDataValid()) {
                 // If there are already data available, deliver them
                 deliverResult(mTmdbData);
             } else {
@@ -389,34 +398,33 @@ public class MainActivity
             // Get sort order from bundle
             String sortOrder = mArgs.getString(LOADER_BUNDLE_KEY_SORT_ORDER);
 
-            Log.d(TAG, "Load in background, page: " + movieResultPage + ", sort order: " + sortOrder);
-
             try {
                 // On loading first result page also load current API configuration
                 if (movieResultPage == 1) {
+
                     // Load current API configuration
                     URL configUrl = NetworkUtils.buildConfigurationUrl();
-                    //String jsonConfig = NetworkUtils.getResponseFromHttpUrl(configUrl);
+                    String jsonConfig = NetworkUtils.getResponseFromHttpUrl(configUrl);
 
-                    // Mock request used for debugging to avoid sending network queries
-                    String jsonConfig = MockDataUtils.getMockJson(getContext(), "mock_configuration");
+                    // Example mock request used for debugging to avoid sending network queries
+                    // String jsonConfig = MockDataUtils.getMockJson(getContext(), "mock_configuration");
 
                     TmdbJsonUtils.getConfigFromJson(mTmdbData, jsonConfig);
                 }
 
                 // Load movie result page
                 URL movieUrl = NetworkUtils.buildMovieUrl(getContext(), sortOrder, movieResultPage);
-                //String jsonMovies = NetworkUtils.getResponseFromHttpUrl(movieUrl);
+                String jsonMovies = NetworkUtils.getResponseFromHttpUrl(movieUrl);
 
-                // Mock request used for debugging to avoid sending network queries
-                String jsonMovies = MockDataUtils.getMockJson(getContext(), "mock_popular");
+                // Example mock request used for debugging to avoid sending network queries
+                // String jsonMovies = MockDataUtils.getMockJson(getContext(), "mock_popular");
 
                 TmdbJsonUtils.getMovieListFromJson(mTmdbData, jsonMovies);
 
                 return mTmdbData;
 
             } catch (IOException iex) {
-                Log.e(TAG, "IOException ");
+                Log.e(TAG, "IOException when fetching API data.");
                 iex.printStackTrace();
                 return null;
             }

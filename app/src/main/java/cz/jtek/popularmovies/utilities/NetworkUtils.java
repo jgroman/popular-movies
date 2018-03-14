@@ -20,17 +20,20 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 import java.util.Scanner;
 
 import cz.jtek.popularmovies.BuildConfig;
 import cz.jtek.popularmovies.R;
 
+/**
+ * Utilities for TMDb API network communication
+ */
 public final class NetworkUtils {
 
     private static final String TAG = NetworkUtils.class.getSimpleName();
@@ -55,6 +58,11 @@ public final class NetworkUtils {
     private static final String API_PARAM_PAGE = "page";
 
 
+    /**
+     * Creates valid TMDb API /configuration URL for network requests
+     *
+     * @return TMDb API configuration URL
+     */
     public static URL buildConfigurationUrl() {
 
         // Build TMDb configuration Uri
@@ -78,6 +86,14 @@ public final class NetworkUtils {
         }
     }
 
+    /**
+     * Creates valid TMDb API /movies URL for network requests
+     *
+     * @param context     Current context
+     * @param sortOrder  Movie sort order ("Most Popular" or "Top Rated")
+     * @param page        Results page
+     * @return TMDb API /movies URL
+     */
     public static URL buildMovieUrl(Context context, String sortOrder, Integer page) {
 
         // Check input params sanity
@@ -128,54 +144,6 @@ public final class NetworkUtils {
         }
     }
 
-    public static URL buildImageUrl(Uri baseUri, String size, String filePath) {
-
-        // Check input params sanity
-        if (baseUri == null) {
-            Log.e(TAG, "buildImageUrl: baseUri parameter cannot be null.");
-            return null;
-        }
-
-        if (size == null || size.length() == 0) {
-            Log.e(TAG, "buildImageUrl: size parameter cannot be null or empty.");
-            return null;
-        }
-
-        if (filePath == null || filePath.length() == 0) {
-            Log.e(TAG, "buildImageUrl: filePath parameter cannot be null or empty.");
-            return null;
-        }
-
-        // Strip leading forward slashes from filePath
-        while (filePath.substring(0,1).equals("/")) {
-            filePath = filePath.substring(1);
-        }
-
-        // Build TMDb image Uri
-        Uri.Builder uriBuilder = new Uri.Builder();
-        uriBuilder.scheme(baseUri.getScheme())
-                .authority(baseUri.getAuthority());
-
-        List<String> pathSegments = baseUri.getPathSegments();
-        for (String pathSegment : pathSegments ) {
-            uriBuilder.appendPath(pathSegment);
-        }
-
-        uriBuilder.appendPath(size)
-                .appendPath(filePath);
-
-        Uri tmdbImageUri = uriBuilder.build();
-
-        try {
-            URL tmdbImageUrl = new URL(tmdbImageUri.toString());
-            Log.d(TAG, "URL image: " + tmdbImageUrl);
-            return tmdbImageUrl;
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     /**
      * This method returns the entire result from the HTTP response.
      *
@@ -198,6 +166,21 @@ public final class NetworkUtils {
             }
             scanner.close();
             return response;
+        } catch (FileNotFoundException fnfe) {
+          // We read error response from API to be processed later with JSON parsing utilities
+            InputStream errorStream = urlConnection.getErrorStream();
+
+            Scanner scanner = new Scanner(errorStream);
+            scanner.useDelimiter("\\A");
+
+            boolean hasInput = scanner.hasNext();
+            String response = null;
+            if (hasInput) {
+                response = scanner.next();
+            }
+            scanner.close();
+            return response;
+
         } finally {
             urlConnection.disconnect();
         }

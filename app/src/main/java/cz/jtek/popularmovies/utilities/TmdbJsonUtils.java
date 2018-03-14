@@ -28,23 +28,38 @@ import java.util.List;
 import cz.jtek.popularmovies.TmdbData;
 import cz.jtek.popularmovies.TmdbData.Config;
 
+/**
+ * TMDb API JSON parsing utilities
+ */
 public class TmdbJsonUtils {
 
     private static final String TAG = TmdbJsonUtils.class.getSimpleName();
 
+    /**
+     * Parses TMDb API /configuration reply and updates tmdbData Config values
+     *
+     * @param tmdbData
+     * @param tmdbConfigJsonString
+     */
     public static void getConfigFromJson(TmdbData tmdbData, String tmdbConfigJsonString) {
 
         boolean isJsonValidApiConfig = false;
+
+        tmdbData.getStatus().setDataValid(true);
 
         try {
             JSONObject tmdbConfigJson = new JSONObject(tmdbConfigJsonString);
 
             if (tmdbConfigJson.has(TmdbData.STATUS_CODE)) {
                 // TMDb API reports an error
+                tmdbData.getStatus().setDataValid(false);
                 int statusCode = tmdbConfigJson.getInt(TmdbData.STATUS_CODE);
+                tmdbData.getStatus().setStatusCode(statusCode);
+
                 String statusMsg = "";
                 if (tmdbConfigJson.has(TmdbData.STATUS_MSG)) {
                     statusMsg = tmdbConfigJson.getString(TmdbData.STATUS_MSG);
+                    tmdbData.getStatus().setStatusMessage(statusMsg);
                 }
                 Log.e(TAG, "TMDb status: " + statusCode + " - " + statusMsg);
                 return;
@@ -56,6 +71,7 @@ public class TmdbJsonUtils {
 
                 if (images.has(TmdbData.CONFIG_SECURE_BASE_URL)) {
 
+                    // Update Config secureBaseUrl value
                     tmdbData.getConfig().setSecureBaseUrl(images.getString(TmdbData.CONFIG_SECURE_BASE_URL));
                     isJsonValidApiConfig = true;
                 }
@@ -64,20 +80,15 @@ public class TmdbJsonUtils {
             if (!isJsonValidApiConfig) {
                 // We didn't find all required JSON objects
                 Log.e(TAG, "Invalid TMDb API configuration data.");
-                return;
             }
 
         } catch (JSONException ex) {
-            Log.e(TAG, "JSONException parsing configuration.");
-            return;
+            Log.e(TAG, "JSONException parsing API configuration reply.");
+            ex.printStackTrace();
         }
-
-        return;
     }
 
     public static List<TmdbData.Movie> getMovieListFromJson(TmdbData tmdbData, String tmdbMovieJsonString) {
-
-        boolean isJsonValidApiMovie = false;
 
         List<TmdbData.Movie> moviesList = tmdbData.getMovieList();
 
