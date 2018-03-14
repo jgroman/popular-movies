@@ -33,9 +33,9 @@ public class MockDataUtils {
     /**
      * Read text file from input stream
      *
-     * @param inputStream
+     * @param inputStream    Input stream
      * @return File contents
-     * @throws IOException
+     * @throws IOException   IOException
      */
     private static String readFile(InputStream inputStream) throws IOException {
         StringBuilder sb = new StringBuilder();
@@ -64,7 +64,7 @@ public class MockDataUtils {
      * @param context    Current context
      * @param fileName Name of file to read
      * @return File contents
-     * @throws IOException
+     * @throws IOException  IOException
      */
     public static String getMockJson(Context context, String fileName) throws IOException {
         InputStream inputStream = context.getResources().openRawResource(

@@ -150,7 +150,7 @@ public class MainActivity
      * Shared preference change listener. On preference change sets global flag.
      *
      * @param sharedPreferences Shared preferences
-     * @param s
+     * @param s                       Unused string parameter
      */
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {

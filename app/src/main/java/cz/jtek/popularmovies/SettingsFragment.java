@@ -59,8 +59,8 @@ public class SettingsFragment
      * This method is called when shared preferences are created. It takes care of updating
      * all preferences summaries to their current value.
      *
-     * @param savedInstanceState
-     * @param rootKey
+     * @param savedInstanceState savedInstanceState
+     * @param rootKey                 rootKey
      */
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -99,7 +99,7 @@ public class SettingsFragment
      * Shared preference change listener. Changed preference gets its summary updated.
      *
      * @param sharedPreferences Shared preferences instance
-     * @param key
+     * @param key                     Changed preference key
      */
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {

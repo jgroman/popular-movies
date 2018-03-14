@@ -66,7 +66,7 @@ public class TmdbData {
 
     public static class Status {
         private boolean mDataValid;
-        private int mStatusCode;
+        // private int mStatusCode;
         private String mStatusMessage;
 
         Status() {
@@ -77,23 +77,23 @@ public class TmdbData {
             mDataValid = valid;
         }
 
-        public boolean getDataValid() {
+        boolean getDataValid() {
             return mDataValid;
         }
 
+        /*
         public void setStatusCode(int code) {
             mStatusCode = code;
         }
 
-        public int getStatusCode() {
-            return mStatusCode;
-        }
+        public int getStatusCode() { return mStatusCode; }
+        */
 
         public void setStatusMessage(String message) {
             mStatusMessage = message;
         }
 
-        public String getStatusMessage() {
+        String getStatusMessage() {
             return mStatusMessage;
         }
     }

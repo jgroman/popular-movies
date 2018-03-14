@@ -27,8 +27,6 @@ import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
-import cz.jtek.popularmovies.utilities.NetworkUtils;
-
 public class MovieGridAdapter
         extends RecyclerView.Adapter<MovieGridAdapter.MovieGridAdapterViewHolder> {
 

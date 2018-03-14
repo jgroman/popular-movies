@@ -22,11 +22,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import cz.jtek.popularmovies.TmdbData;
-import cz.jtek.popularmovies.TmdbData.Config;
 
 /**
  * TMDb API JSON parsing utilities
@@ -38,8 +36,8 @@ public class TmdbJsonUtils {
     /**
      * Parses TMDb API /configuration reply and updates tmdbData Config values
      *
-     * @param tmdbData
-     * @param tmdbConfigJsonString
+     * @param tmdbData                  tmdbData instance
+     * @param tmdbConfigJsonString  API JSON response string
      */
     public static void getConfigFromJson(TmdbData tmdbData, String tmdbConfigJsonString) {
 
@@ -54,7 +52,6 @@ public class TmdbJsonUtils {
                 // TMDb API reports an error
                 tmdbData.getStatus().setDataValid(false);
                 int statusCode = tmdbConfigJson.getInt(TmdbData.STATUS_CODE);
-                tmdbData.getStatus().setStatusCode(statusCode);
 
                 String statusMsg = "";
                 if (tmdbConfigJson.has(TmdbData.STATUS_MSG)) {
