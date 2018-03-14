@@ -18,12 +18,12 @@ package cz.jtek.popularmovies;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
+
+import android.util.Log;
 
 import com.squareup.picasso.Picasso;
 
@@ -35,6 +35,7 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
         void onClick(int itemId);
     }
 
+    @SuppressWarnings("unused")
     private static final String TAG = MovieGridAdapter.class.getSimpleName();
 
     private List<TmdbData.Movie> mMovieList;
@@ -52,7 +53,7 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
      * @param clickHandler OnClick handler for this adapter. It is called when grid item is clicked.
      *
      */
-    public MovieGridAdapter(MovieGridOnClickHandler clickHandler, int requestedWidth, int requestedHeight) {
+    MovieGridAdapter(MovieGridOnClickHandler clickHandler, int requestedWidth, int requestedHeight) {
         mClickHandler = clickHandler;
         mContext = null;
         mRequestedWidth = requestedWidth;
@@ -65,10 +66,10 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
 
 
         //public final TextView mMovieTextView;
-        public final ImageView mMoviePosterImageView;
+        final ImageView mMoviePosterImageView;
 
         // Attach OnClick listener when creating view
-        public MovieGridAdapterViewHolder(View view) {
+        MovieGridAdapterViewHolder(View view) {
             super(view);
             //mMovieTextView = view.findViewById(R.id.tv_movie_item_title);
             mMoviePosterImageView = view.findViewById(R.id.iv_movie_item_poster);
@@ -105,9 +106,8 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
         int gridItemLayoutId = R.layout.movie_recycler_item;
 
         LayoutInflater inflater = LayoutInflater.from(context);
-        boolean shouldAttachToParentImmediately = false;
 
-        View view = inflater.inflate(gridItemLayoutId, parent, shouldAttachToParentImmediately);
+        View view = inflater.inflate(gridItemLayoutId, parent, false);
         return new MovieGridAdapterViewHolder(view);
     }
 
@@ -148,7 +148,7 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
      *
      * @param tmdbData The new movie data to be displayed.
      */
-    public void setMovieData(TmdbData tmdbData) {
+    void setMovieData(TmdbData tmdbData) {
         if (tmdbData != null) {
             mMovieList = tmdbData.getMovieList();
             mTmdbConfig = tmdbData.getConfig();
