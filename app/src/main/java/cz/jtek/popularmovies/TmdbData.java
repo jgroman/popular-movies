@@ -30,7 +30,9 @@ public class TmdbData {
     public static final String CONFIG_IMAGES = "images";
     public static final String CONFIG_SECURE_BASE_URL = "secure_base_url";
 
-    public static final String DEFAULT_IMAGE_SIZE = "w185";
+    private static final String DEFAULT_IMAGE_SIZE = "w185";
+    private static final int DEFAULT_MOVIE_POSTER_WIDTH = 185;
+    private static final int DEFAULT_MOVIE_POSTER_HEIGHT = 278;
 
     // API Movie
     public static final String MOVIE_RESULTS = "results";
@@ -43,7 +45,7 @@ public class TmdbData {
     private TmdbData.Config mConfig;
     private List<Movie> mMovieList;
 
-    public TmdbData() {
+    TmdbData() {
         mConfig = new Config();
         mMovieList = new ArrayList<>();
     }
@@ -62,12 +64,14 @@ public class TmdbData {
         public String getSecureBaseUrl() {
             return mSecureBaseUrl;
         }
-
         public void setSecureBaseUrl(String url) {
             mSecureBaseUrl = url;
         }
 
-        public String getPosterSize() { return DEFAULT_IMAGE_SIZE; }
+        static String getPosterSize() { return DEFAULT_IMAGE_SIZE; }
+
+        static int getPosterWidth() { return DEFAULT_MOVIE_POSTER_WIDTH; }
+        static int getPosterHeight() { return DEFAULT_MOVIE_POSTER_HEIGHT; }
     }
 
     public static class Movie {

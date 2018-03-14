@@ -64,12 +64,8 @@ public class MainActivity
 
     // Default number of columns in grid
     private static final int DEFAULT_GRID_COLUMNS = 3;
-    private static final int DEFAULT_MOVIE_POSTER_WIDTH = 185;
-    private static final int DEFAULT_MOVIE_POSTER_HEIGHT = 278;
 
     private MovieGridAdapter mMovieGridAdapter;
-
-    private static final int MOVIELIST_LOADER_ID = 0;
 
     // Movie detail activity extras
     public static final String EXTRA_DETAIL_TITLE = "title";
@@ -80,14 +76,13 @@ public class MainActivity
 
     // Shared preferences
     public static final String PREF_KEY_SORT_ORDER = "pref_key_sort_order_list";
+    private static boolean prefsUpdatedFlag = false;
 
-
-    // AsyncLoader Bundle
+    // AsyncLoader
+    private static final int MOVIELIST_LOADER_ID = 0;
     private static final String LOADER_BUNDLE_KEY_PAGE = "page";
     private static final String LOADER_BUNDLE_KEY_SORT_ORDER = "sort-order";
     private int mApiResultsPageToLoad = 1;
-
-    private static boolean prefsWereUpdated = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,18 +97,18 @@ public class MainActivity
         int displayWidth = getDisplayWidth(this);
 
         int gridColumns = DEFAULT_GRID_COLUMNS;
-        int optimalWidth = DEFAULT_MOVIE_POSTER_WIDTH;
-        int optimalHeight = DEFAULT_MOVIE_POSTER_HEIGHT;
+        int optimalWidth = TmdbData.Config.getPosterWidth();
+        int optimalHeight = TmdbData.Config.getPosterHeight();
 
         if (displayWidth > 0) {
             // Number of columns which fits into current display width
-            gridColumns = displayWidth / DEFAULT_MOVIE_POSTER_WIDTH;
+            gridColumns = displayWidth / TmdbData.Config.getPosterWidth();
             // Optimal column width to fill all available space
             optimalWidth = displayWidth / gridColumns;
             // Factor to resize original image with
-            double resizeFactor = (double) optimalWidth / (double) DEFAULT_MOVIE_POSTER_WIDTH;
+            double resizeFactor = (double) optimalWidth / (double) TmdbData.Config.getPosterWidth();
             // Resized image height
-            optimalHeight = (int) ((double) DEFAULT_MOVIE_POSTER_HEIGHT * resizeFactor);
+            optimalHeight = (int) ((double) TmdbData.Config.getPosterHeight() * resizeFactor);
         }
 
         // Layout
@@ -151,15 +146,15 @@ public class MainActivity
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        prefsWereUpdated = true;
+        prefsUpdatedFlag = true;
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
-        if (prefsWereUpdated) {
-            prefsWereUpdated = false;
+        if (prefsUpdatedFlag) {
+            prefsUpdatedFlag = false;
 
             // On preference change restart loading results from page 1
             mApiResultsPageToLoad = 1;
@@ -224,11 +219,11 @@ public class MainActivity
         Intent intent = new Intent(this, MovieDetailActivity.class);
 
         TmdbData.Movie movie = mTmdbData.getMovieList().get(itemId);
-        String secureBaseUrl = mTmdbData.getConfig().getSecureBaseUrl();
+        String posterBaseUrl = mTmdbData.getConfig().getSecureBaseUrl() + TmdbData.Config.getPosterSize();
 
         intent.putExtra(EXTRA_DETAIL_TITLE, movie.getTitle());
         intent.putExtra(EXTRA_DETAIL_OVERVIEW, movie.getOverview());
-        intent.putExtra(EXTRA_DETAIL_POSTER_URL, secureBaseUrl + movie.getPosterPath());
+        intent.putExtra(EXTRA_DETAIL_POSTER_URL, posterBaseUrl + movie.getPosterPath());
         intent.putExtra(EXTRA_DETAIL_RELEASE_DATE, movie.getReleaseDate());
         intent.putExtra(EXTRA_DETAIL_VOTE_AVERAGE, movie.getVoteAverage());
 

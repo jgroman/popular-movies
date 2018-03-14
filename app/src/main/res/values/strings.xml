@@ -8,6 +8,10 @@
 
     <string name="action_settings">Settings</string>
 
+    <!-- Detail view -->
+    <string name="detail_vote_average">Vote Average</string>
+    <string name="detail_release_date">Release Date</string>
+
     <!-- Preferences -->
     <string name="pref_sort_order_title">Sort Order</string>
     <string name="pref_sort_order_dialog">Select Sort Order</string>

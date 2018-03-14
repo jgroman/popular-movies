@@ -122,7 +122,7 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
      */
     @Override
     public void onBindViewHolder(MovieGridAdapterViewHolder holder, int position) {
-        String posterBaseUrl = mTmdbConfig.getSecureBaseUrl() + mTmdbConfig.getPosterSize();
+        String posterBaseUrl = mTmdbConfig.getSecureBaseUrl() + TmdbData.Config.getPosterSize();
         String posterPath = mMovieList.get(position).getPosterPath();
 
         Picasso.with(mContext)
