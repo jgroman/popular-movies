@@ -101,24 +101,28 @@ public class MainActivity
         // Our grid layout uses full display width
         int displayWidth = getDisplayWidth(this);
 
-        // Calculate number of columns in grid
         int gridColumns = DEFAULT_GRID_COLUMNS;
+        int optimalWidth = DEFAULT_MOVIE_POSTER_WIDTH;
+        int optimalHeight = DEFAULT_MOVIE_POSTER_HEIGHT;
+
         if (displayWidth > 0) {
+            // Number of columns which fits into current display width
             gridColumns = displayWidth / DEFAULT_MOVIE_POSTER_WIDTH;
-            // TODO Calculate resize factor and apply to both image sizes
-            //double resizeFactor = (((double) displayWidth / (double) DEFAULT_MOVIE_POSTER_WIDTH) - gridColumns) * (double) DEFAULT_MOVIE_POSTER_WIDTH;
-
-            //Log.d(TAG, "Resize: " + resizeFactor);
+            // Optimal column width to fill all available space
+            optimalWidth = displayWidth / gridColumns;
+            // Factor to resize original image with
+            double resizeFactor = (double) optimalWidth / (double) DEFAULT_MOVIE_POSTER_WIDTH;
+            // Resized image height
+            optimalHeight = (int) ((double) DEFAULT_MOVIE_POSTER_HEIGHT * resizeFactor);
         }
-
-
 
         // Layout
         GridLayoutManager layoutManager = new GridLayoutManager(this, gridColumns);
         mRecyclerView.setLayoutManager(layoutManager);
         mRecyclerView.setHasFixedSize(true);
 
-        mMovieGridAdapter = new MovieGridAdapter(this, this);
+        // Sending preferred image size to grid adapter
+        mMovieGridAdapter = new MovieGridAdapter(this, optimalWidth, optimalHeight);
         mRecyclerView.setAdapter(mMovieGridAdapter);
 
         // Shared Preferences and preference change listener

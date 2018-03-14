@@ -41,6 +41,7 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
     private TmdbData.Config mTmdbConfig;
 
     private Context mContext;
+    private int mRequestedWidth, mRequestedHeight;
 
     final private MovieGridOnClickHandler mClickHandler;
 
@@ -51,9 +52,11 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
      * @param clickHandler OnClick handler for this adapter. It is called when grid item is clicked.
      *
      */
-    public MovieGridAdapter(Context context, MovieGridOnClickHandler clickHandler) {
+    public MovieGridAdapter(MovieGridOnClickHandler clickHandler, int requestedWidth, int requestedHeight) {
         mClickHandler = clickHandler;
         mContext = null;
+        mRequestedWidth = requestedWidth;
+        mRequestedHeight = requestedHeight;
     }
 
     public class MovieGridAdapterViewHolder
@@ -111,7 +114,7 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
     /**
      * OnBindViewHolder is called by the RecyclerView to display the data at the specified
      * position. In this method, we update the contents of the ViewHolder to display the movie
-     * data for this particular position addressed by "position" parameter.
+     * poster for this particular position addressed by "position" parameter.
      *
      * @param holder    The ViewHolder which should be updated to represent the
      *                   contents of the item at the given position in the data set.
@@ -122,12 +125,9 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
         String posterBaseUrl = mTmdbConfig.getSecureBaseUrl() + mTmdbConfig.getPosterSize();
         String posterPath = mMovieList.get(position).getPosterPath();
 
-        Log.d(TAG, "posterUrl: " + posterBaseUrl + posterPath);
-
         Picasso.with(mContext)
                 .load(posterBaseUrl + posterPath)
-                //.fit()
-                //.centerCrop()
+                .resize(mRequestedWidth, mRequestedHeight)
                 .into(holder.mMoviePosterImageView);
     }
 
