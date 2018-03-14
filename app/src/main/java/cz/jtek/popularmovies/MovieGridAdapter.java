@@ -23,20 +23,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import android.util.Log;
-
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
-public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.MovieGridAdapterViewHolder> {
+import cz.jtek.popularmovies.utilities.NetworkUtils;
+
+public class MovieGridAdapter
+        extends RecyclerView.Adapter<MovieGridAdapter.MovieGridAdapterViewHolder> {
 
     public interface MovieGridOnClickHandler {
         void onClick(int itemId);
     }
-
-    @SuppressWarnings("unused")
-    private static final String TAG = MovieGridAdapter.class.getSimpleName();
 
     private List<TmdbData.Movie> mMovieList;
     private TmdbData.Config mTmdbConfig;
@@ -50,7 +48,8 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
     /**
      * Class constructor - creates MovieGridAdapter.
      *
-     * @param clickHandler OnClick handler for this adapter. It is called when grid item is clicked.
+     * @param clickHandler OnClick handler for this adapter. It is called
+     *                              when grid item is clicked.
      *
      */
     MovieGridAdapter(MovieGridOnClickHandler clickHandler, int requestedWidth, int requestedHeight) {
@@ -123,6 +122,7 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
     @Override
     public void onBindViewHolder(MovieGridAdapterViewHolder holder, int position) {
         String posterBaseUrl = mTmdbConfig.getSecureBaseUrl() + TmdbData.Config.getPosterSize();
+
         String posterPath = mMovieList.get(position).getPosterPath();
 
         Picasso.with(mContext)

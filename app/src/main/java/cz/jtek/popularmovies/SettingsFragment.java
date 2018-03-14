@@ -23,17 +23,20 @@ import android.support.v7.preference.ListPreference;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.preference.PreferenceScreen;
-import android.util.Log;
 
-
+/**
+ * The SettingsFragment serves as the display for all of the user settings.
+ *
+ */
 public class SettingsFragment
         extends PreferenceFragmentCompat
         implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-    private static final String TAG = SettingsFragment.class.getSimpleName();
-
-    /*
+    /**
+     * This method updates selected preference summary to given string
      *
+     * @param preference Preference to update summary of
+     * @param value       New summary value
      */
     private void updatePrefSummary(Preference preference, Object value) {
         String stringValue = value.toString();
@@ -52,6 +55,13 @@ public class SettingsFragment
         }
     }
 
+    /**
+     * This method is called when shared preferences are created. It takes care of updating
+     * all preferences summaries to their current value.
+     *
+     * @param savedInstanceState
+     * @param rootKey
+     */
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         addPreferencesFromResource(R.xml.preference);
@@ -85,12 +95,18 @@ public class SettingsFragment
                 .unregisterOnSharedPreferenceChangeListener(this);
     }
 
+    /**
+     * Shared preference change listener. Changed preference gets its summary updated.
+     *
+     * @param sharedPreferences Shared preferences instance
+     * @param key
+     */
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 
         // Update changed preference summary based on new value
         Preference preference = findPreference(key);
-        if (null != preference) {
+        if (preference != null) {
             if (!(preference instanceof CheckBoxPreference)) {
                 updatePrefSummary(preference, sharedPreferences.getString(key, ""));
             }
