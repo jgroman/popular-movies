@@ -22,10 +22,21 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * These utilities can be used for application testing without the need of network
+ * connection.
+ */
 public class MockDataUtils {
 
     private static final String TAG = MockDataUtils.class.getSimpleName();
 
+    /**
+     * Read text file from input stream
+     *
+     * @param inputStream    Input stream
+     * @return File contents
+     * @throws IOException   IOException
+     */
     private static String readFile(InputStream inputStream) throws IOException {
         StringBuilder sb = new StringBuilder();
         int readLen;
@@ -39,12 +50,22 @@ public class MockDataUtils {
             inputStream.close();
         } catch (IOException ex) {
             Log.e(TAG, "IOException reading file.");
+            ex.printStackTrace();
             return "";
         }
 
         return sb.toString();
     }
 
+    /**
+     * Provides file contents for testing. Example JSON files are read
+     * from /res/raw directory.
+     *
+     * @param context    Current context
+     * @param fileName Name of file to read
+     * @return File contents
+     * @throws IOException  IOException
+     */
     public static String getMockJson(Context context, String fileName) throws IOException {
         InputStream inputStream = context.getResources().openRawResource(
                 context.getResources().getIdentifier(fileName, "raw", context.getPackageName())

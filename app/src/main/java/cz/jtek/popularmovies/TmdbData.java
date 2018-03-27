@@ -42,12 +42,18 @@ public class TmdbData {
     public static final String MOVIE_VOTE_AVERAGE = "vote_average";
     public static final String MOVIE_OVERVIEW = "overview";
 
-    private TmdbData.Config mConfig;
-    private List<Movie> mMovieList;
+    final private TmdbData.Config mConfig;
+    final private List<Movie> mMovieList;
+    final private Status mStatus;
 
     TmdbData() {
+        mStatus = new Status();
         mConfig = new Config();
         mMovieList = new ArrayList<>();
+    }
+
+    public TmdbData.Status getStatus() {
+        return mStatus;
     }
 
     public TmdbData.Config getConfig() {
@@ -58,10 +64,44 @@ public class TmdbData {
         return mMovieList;
     }
 
+    public static class Status {
+        private boolean mDataValid;
+        // private int mStatusCode;
+        private String mStatusMessage;
+
+        Status() {
+            mDataValid = true;
+        }
+
+        public void setDataValid(boolean valid) {
+            mDataValid = valid;
+        }
+
+        boolean getDataValid() {
+            return mDataValid;
+        }
+
+        /*
+        public void setStatusCode(int code) {
+            mStatusCode = code;
+        }
+
+        public int getStatusCode() { return mStatusCode; }
+        */
+
+        public void setStatusMessage(String message) {
+            mStatusMessage = message;
+        }
+
+        String getStatusMessage() {
+            return mStatusMessage;
+        }
+    }
+
     public static class Config {
         private String mSecureBaseUrl;
 
-        public String getSecureBaseUrl() {
+        String getSecureBaseUrl() {
             return mSecureBaseUrl;
         }
         public void setSecureBaseUrl(String url) {
@@ -76,18 +116,19 @@ public class TmdbData {
 
     public static class Movie {
 
-        private int mVoteCount;
-        private int mId;
-        private boolean mVideo;
+        /* Movie API properties */
+        // private int mVoteCount;
+        // private int mId;
+        // private boolean mVideo;
         private double mVoteAverage;
         private String mTitle;
-        private double mPopularity;
+        // private double mPopularity;
         private String mPosterPath;
-        private String mOriginalLanguage;
-        private String mOriginalTitle;
-        private int[] mGenreIds;
-        private String mBackdropPath;
-        private boolean mAdult;
+        // private String mOriginalLanguage;
+        // private String mOriginalTitle;
+        // private int[] mGenreIds;
+        // private String mBackdropPath;
+        // private boolean mAdult;
         private String mOverview;
         private String mReleaseDate;
 
@@ -96,19 +137,19 @@ public class TmdbData {
         public void setTitle(String title) { mTitle = title; }
 
         // Release date
-        public String getReleaseDate() { return mReleaseDate; }
+        String getReleaseDate() { return mReleaseDate; }
         public void setReleaseDate(String releaseDate) { mReleaseDate = releaseDate; }
 
         // Poster path
-        public String getPosterPath() { return mPosterPath; }
+        String getPosterPath() { return mPosterPath; }
         public void setPosterPath(String posterPath) { mPosterPath = posterPath; }
 
         // Vote average
-        public double getVoteAverage() { return mVoteAverage; }
+        double getVoteAverage() { return mVoteAverage; }
         public void setVoteAverage(double voteAverage) { mVoteAverage = voteAverage; }
 
         // Overview
-        public String getOverview() { return mOverview; }
+        String getOverview() { return mOverview; }
         public void setOverview(String overview) { mOverview = overview; }
 
     }
