@@ -66,11 +66,8 @@ public class MainActivity
     private MovieGridAdapter mMovieGridAdapter;
 
     // Movie detail activity extras
-    public static final String EXTRA_DETAIL_TITLE = "title";
-    public static final String EXTRA_DETAIL_RELEASE_DATE = "release";
-    public static final String EXTRA_DETAIL_OVERVIEW = "overview";
-    public static final String EXTRA_DETAIL_VOTE_AVERAGE = "vote_average";
-    public static final String EXTRA_DETAIL_POSTER_URL = "poster_url";
+    public static final String EXTRA_MOVIE = "movie";
+    public static final String EXTRA_CONFIG = "config";
 
     // Shared preferences
     private static final String PREF_KEY_SORT_ORDER = "pref_key_sort_order_list";
@@ -227,14 +224,11 @@ public class MainActivity
     public void onClick(int itemId) {
         Intent intent = new Intent(this, MovieDetailActivity.class);
 
+        TmdbData.Config config = mTmdbData.getConfig();
         TmdbData.Movie movie = mTmdbData.getMovieList().get(itemId);
-        String posterBaseUrl = mTmdbData.getConfig().getSecureBaseUrl() + TmdbData.Config.getPosterSize();
 
-        intent.putExtra(EXTRA_DETAIL_TITLE, movie.getTitle());
-        intent.putExtra(EXTRA_DETAIL_OVERVIEW, movie.getOverview());
-        intent.putExtra(EXTRA_DETAIL_POSTER_URL, posterBaseUrl + movie.getPosterPath());
-        intent.putExtra(EXTRA_DETAIL_RELEASE_DATE, movie.getReleaseDate());
-        intent.putExtra(EXTRA_DETAIL_VOTE_AVERAGE, movie.getVoteAverage());
+        intent.putExtra(EXTRA_CONFIG, config);
+        intent.putExtra(EXTRA_MOVIE, movie);
 
         startActivity(intent);
     }

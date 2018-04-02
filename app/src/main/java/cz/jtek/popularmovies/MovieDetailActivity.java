@@ -47,54 +47,56 @@ public class MovieDetailActivity extends AppCompatActivity {
         Intent startingIntent = getIntent();
 
         if (startingIntent != null) {
-            if (startingIntent.hasExtra(MainActivity.EXTRA_DETAIL_TITLE)) {
-                TextView titleTextView = findViewById(R.id.tv_detail_title);
+            if (startingIntent.hasExtra(MainActivity.EXTRA_MOVIE)
+                    && startingIntent.hasExtra(MainActivity.EXTRA_CONFIG)) {
 
-                String title = startingIntent.getStringExtra(MainActivity.EXTRA_DETAIL_TITLE);
-                titleTextView.setText(title);
-            }
+                // TMDb configuration contains base URL for posters
+                TmdbData.Config config = startingIntent.getParcelableExtra(MainActivity.EXTRA_CONFIG);
+                TmdbData.Movie movie = startingIntent.getParcelableExtra(MainActivity.EXTRA_MOVIE);
 
-            if (startingIntent.hasExtra(MainActivity.EXTRA_DETAIL_POSTER_URL)) {
-                ImageView posterImageView = findViewById(R.id.iv_detail_poster);
+                if (movie != null) {
+                    // Movie title
+                    TextView titleTextView = findViewById(R.id.tv_detail_title);
+                    titleTextView.setText(movie.getTitle());
 
-                String posterUrl = startingIntent.getStringExtra(MainActivity.EXTRA_DETAIL_POSTER_URL);
-                Picasso.with(this)
-                        .load(posterUrl)
-                        .into(posterImageView);
-            }
+                    // Poster
+                    if (config != null) {
+                        ImageView posterImageView = findViewById(R.id.iv_detail_poster);
+                        String posterBaseUrl = config.getSecureBaseUrl() + TmdbData.Config.getPosterSize();
+                        Picasso.with(this)
+                                .load(posterBaseUrl + movie.getPosterPath())
+                                .into(posterImageView);
+                    }
 
-            if (startingIntent.hasExtra(MainActivity.EXTRA_DETAIL_VOTE_AVERAGE)) {
-                TextView voteAverageTextView = findViewById(R.id.tv_detail_vote_average);
+                    // Vote average
+                    TextView voteAverageTextView = findViewById(R.id.tv_detail_vote_average);
+                    voteAverageTextView.setText(String.format(Locale.getDefault(),"%.1f", movie.getVoteAverage()));
 
-                double voteAverage = startingIntent.getDoubleExtra(MainActivity.EXTRA_DETAIL_VOTE_AVERAGE, 0.0f);
-                voteAverageTextView.setText(String.format(Locale.getDefault(),"%.1f", voteAverage));
-            }
+                    // Release date
+                    TextView releaseTextView = findViewById(R.id.tv_detail_release_date);
 
-            if (startingIntent.hasExtra(MainActivity.EXTRA_DETAIL_RELEASE_DATE)) {
-                TextView releaseTextView = findViewById(R.id.tv_detail_release_date);
+                    String releaseDateString = movie.getReleaseDate();
 
-                String releaseDateString = startingIntent.getStringExtra(MainActivity.EXTRA_DETAIL_RELEASE_DATE);
+                    DateFormat dateFormatAPI = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                    DateFormat dateFormatOutput = DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault());
 
-                DateFormat dateFormatAPI = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-                DateFormat dateFormatOutput = DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault());
+                    try {
+                        Date releaseDate = dateFormatAPI.parse(releaseDateString);
+                        releaseTextView.setText(dateFormatOutput.format(releaseDate));
+                    } catch (ParseException pe) {
+                        Log.e(TAG, "Release date parse exception.");
+                    }
 
-                try {
-                    Date releaseDate = dateFormatAPI.parse(releaseDateString);
-                    releaseTextView.setText(dateFormatOutput.format(releaseDate));
-                } catch (ParseException pe) {
-                    Log.e(TAG, "Release date parse exception.");
+                    // Overview
+                    TextView overviewTextView = findViewById(R.id.tv_detail_overview);
+
+                    String overview = movie.getOverview();
+                    SpannableString overviewSpannable = new SpannableString(overview);
+                    overviewSpannable.setSpan(new LeadingMarginSpan.Standard(24, 0),0, overview.length(),0);
+
+                    overviewTextView.setText(overviewSpannable);
+
                 }
-
-            }
-
-            if (startingIntent.hasExtra(MainActivity.EXTRA_DETAIL_OVERVIEW)) {
-                TextView overviewTextView = findViewById(R.id.tv_detail_overview);
-
-                String overview = startingIntent.getStringExtra(MainActivity.EXTRA_DETAIL_OVERVIEW);
-                SpannableString overviewSpannable = new SpannableString(overview);
-                overviewSpannable.setSpan(new LeadingMarginSpan.Standard(24, 0),0, overview.length(),0);
-
-                overviewTextView.setText(overviewSpannable);
             }
 
         }

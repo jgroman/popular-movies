@@ -16,6 +16,9 @@
 
 package cz.jtek.popularmovies;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -98,7 +101,7 @@ public class TmdbData {
         }
     }
 
-    public static class Config {
+    public static class Config implements Parcelable {
         private String mSecureBaseUrl;
 
         String getSecureBaseUrl() {
@@ -112,9 +115,38 @@ public class TmdbData {
 
         static int getPosterWidth() { return DEFAULT_MOVIE_POSTER_WIDTH; }
         static int getPosterHeight() { return DEFAULT_MOVIE_POSTER_HEIGHT; }
+
+        public Config() {}
+
+        private Config(Parcel in) {
+            mSecureBaseUrl = in.readString();
+        }
+
+        @Override
+        public int describeContents() {
+            // No file descriptors in class members
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel parcel, int flags) {
+            parcel.writeString(mSecureBaseUrl);
+        }
+
+        static final Parcelable.Creator<Config> CREATOR
+                = new Parcelable.Creator<Config>() {
+
+            public Config createFromParcel(Parcel in) {
+                return new Config(in);
+            }
+
+            public Config[] newArray(int size) {
+                return new Config[size];
+            }
+        };
     }
 
-    public static class Movie {
+    public static class Movie implements Parcelable {
 
         /* Movie API properties */
         // private int mVoteCount;
@@ -151,6 +183,43 @@ public class TmdbData {
         // Overview
         String getOverview() { return mOverview; }
         public void setOverview(String overview) { mOverview = overview; }
+
+        @Override
+        public int describeContents() {
+            // No file descriptors in class members
+            return 0;
+        }
+
+        public Movie() { }
+
+        private Movie(Parcel in) {
+            mTitle = in.readString();
+            mOverview = in.readString();
+            mPosterPath = in.readString();
+            mReleaseDate = in.readString();
+            mVoteAverage = in.readDouble();
+        }
+
+        @Override
+        public void writeToParcel(Parcel parcel, int flags) {
+            parcel.writeString(mTitle);
+            parcel.writeString(mOverview);
+            parcel.writeString(mPosterPath);
+            parcel.writeString(mReleaseDate);
+            parcel.writeDouble(mVoteAverage);
+        }
+
+        static final Parcelable.Creator<Movie> CREATOR
+                = new Parcelable.Creator<Movie>() {
+
+            public Movie createFromParcel(Parcel in) {
+                return new Movie(in);
+            }
+
+            public Movie[] newArray(int size) {
+                return new Movie[size];
+            }
+        };
 
     }
 }
