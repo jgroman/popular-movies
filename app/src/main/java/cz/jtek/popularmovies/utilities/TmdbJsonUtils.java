@@ -48,14 +48,14 @@ public class TmdbJsonUtils {
         try {
             JSONObject tmdbConfigJson = new JSONObject(tmdbConfigJsonString);
 
-            if (tmdbConfigJson.has(TmdbData.STATUS_CODE)) {
-                // TMDb API reports an error
+            // Check whether TMDb API reports an error
+            if (tmdbConfigJson.has(TmdbData.Status.CODE)) {
                 tmdbData.getStatus().setDataValid(false);
-                int statusCode = tmdbConfigJson.getInt(TmdbData.STATUS_CODE);
+                int statusCode = tmdbConfigJson.getInt(TmdbData.Status.CODE);
 
                 String statusMsg = "";
-                if (tmdbConfigJson.has(TmdbData.STATUS_MSG)) {
-                    statusMsg = tmdbConfigJson.getString(TmdbData.STATUS_MSG);
+                if (tmdbConfigJson.has(TmdbData.Status.MSG)) {
+                    statusMsg = tmdbConfigJson.getString(TmdbData.Status.MSG);
                     tmdbData.getStatus().setStatusMessage(statusMsg);
                 }
                 Log.e(TAG, "TMDb status: " + statusCode + " - " + statusMsg);
@@ -63,13 +63,13 @@ public class TmdbJsonUtils {
             }
 
             // Currently we are only interested in "secure base URL" string from "images" object
-            if (tmdbConfigJson.has(TmdbData.CONFIG_IMAGES)) {
-                JSONObject images = tmdbConfigJson.getJSONObject(TmdbData.CONFIG_IMAGES);
+            if (tmdbConfigJson.has(TmdbData.Config.IMAGES)) {
+                JSONObject images = tmdbConfigJson.getJSONObject(TmdbData.Config.IMAGES);
 
-                if (images.has(TmdbData.CONFIG_SECURE_BASE_URL)) {
+                if (images.has(TmdbData.Config.SECURE_BASE_URL)) {
 
                     // Update Config secureBaseUrl value
-                    tmdbData.getConfig().setSecureBaseUrl(images.getString(TmdbData.CONFIG_SECURE_BASE_URL));
+                    tmdbData.getConfig().setSecureBaseUrl(images.getString(TmdbData.Config.SECURE_BASE_URL));
                     isJsonValidApiConfig = true;
                 }
             }
@@ -92,43 +92,48 @@ public class TmdbJsonUtils {
         try {
             JSONObject movieJson = new JSONObject(tmdbMovieJsonString);
 
-            if (movieJson.has(TmdbData.STATUS_CODE)) {
-                // TMDb API reports an error
-                int statusCode = movieJson.getInt(TmdbData.STATUS_CODE);
+            // Check whether TMDb API reports an error
+            if (movieJson.has(TmdbData.Status.CODE)) {
+                int statusCode = movieJson.getInt(TmdbData.Status.CODE);
                 String statusMsg = "";
-                if (movieJson.has(TmdbData.STATUS_MSG)) {
-                    statusMsg = movieJson.getString(TmdbData.STATUS_MSG);
+                if (movieJson.has(TmdbData.Status.MSG)) {
+                    statusMsg = movieJson.getString(TmdbData.Status.MSG);
                 }
                 Log.e(TAG, "TMDb status: " + statusCode + " - " + statusMsg);
                 return null;
             }
 
-            if (movieJson.has(TmdbData.MOVIE_RESULTS)) {
-                JSONArray results = movieJson.getJSONArray(TmdbData.MOVIE_RESULTS);
+            // Parsing returned data
+            if (movieJson.has(TmdbData.Movie.RESULTS)) {
+                JSONArray results = movieJson.getJSONArray(TmdbData.Movie.RESULTS);
                 int resultCount = results.length();
 
                 for (int i=0; i<resultCount; i++) {
                     JSONObject movieObj = results.getJSONObject(i);
                     TmdbData.Movie movie = new TmdbData.Movie();
 
-                    if (movieObj.has(TmdbData.MOVIE_TITLE)) {
-                        movie.setTitle(movieObj.getString(TmdbData.MOVIE_TITLE));
+                    if (movieObj.has(TmdbData.Movie.ID)) {
+                        movie.setId(movieObj.getInt(TmdbData.Movie.ID));
                     }
 
-                    if (movieObj.has(TmdbData.MOVIE_RELEASE_DATE)) {
-                        movie.setReleaseDate(movieObj.getString(TmdbData.MOVIE_RELEASE_DATE));
+                    if (movieObj.has(TmdbData.Movie.TITLE)) {
+                        movie.setTitle(movieObj.getString(TmdbData.Movie.TITLE));
                     }
 
-                    if (movieObj.has(TmdbData.MOVIE_POSTER_PATH)) {
-                        movie.setPosterPath(movieObj.getString(TmdbData.MOVIE_POSTER_PATH));
+                    if (movieObj.has(TmdbData.Movie.RELEASE_DATE)) {
+                        movie.setReleaseDate(movieObj.getString(TmdbData.Movie.RELEASE_DATE));
                     }
 
-                    if (movieObj.has(TmdbData.MOVIE_VOTE_AVERAGE)) {
-                        movie.setVoteAverage(movieObj.getDouble(TmdbData.MOVIE_VOTE_AVERAGE));
+                    if (movieObj.has(TmdbData.Movie.POSTER_PATH)) {
+                        movie.setPosterPath(movieObj.getString(TmdbData.Movie.POSTER_PATH));
                     }
 
-                    if (movieObj.has(TmdbData.MOVIE_OVERVIEW)) {
-                        movie.setOverview(movieObj.getString(TmdbData.MOVIE_OVERVIEW));
+                    if (movieObj.has(TmdbData.Movie.VOTE_AVERAGE)) {
+                        movie.setVoteAverage(movieObj.getDouble(TmdbData.Movie.VOTE_AVERAGE));
+                    }
+
+                    if (movieObj.has(TmdbData.Movie.OVERVIEW)) {
+                        movie.setOverview(movieObj.getString(TmdbData.Movie.OVERVIEW));
                     }
 
                     moviesList.add(movie);

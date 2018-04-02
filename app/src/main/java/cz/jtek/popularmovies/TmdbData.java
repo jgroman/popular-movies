@@ -24,26 +24,14 @@ import java.util.List;
 
 public class TmdbData {
 
-    // API Status
-    // https://www.themoviedb.org/documentation/api/status-codes
-    public static final String STATUS_CODE = "status_code";
-    public static final String STATUS_MSG = "status_message";
 
     // API Configuration
-    public static final String CONFIG_IMAGES = "images";
-    public static final String CONFIG_SECURE_BASE_URL = "secure_base_url";
-
     private static final String DEFAULT_IMAGE_SIZE = "w185";
     private static final int DEFAULT_MOVIE_POSTER_WIDTH = 185;
     private static final int DEFAULT_MOVIE_POSTER_HEIGHT = 278;
 
-    // API Movie
-    public static final String MOVIE_RESULTS = "results";
-    public static final String MOVIE_TITLE = "title";
-    public static final String MOVIE_RELEASE_DATE = "release_date";
-    public static final String MOVIE_POSTER_PATH = "poster_path";
-    public static final String MOVIE_VOTE_AVERAGE = "vote_average";
-    public static final String MOVIE_OVERVIEW = "overview";
+
+
 
     final private TmdbData.Config mConfig;
     final private List<Movie> mMovieList;
@@ -68,6 +56,11 @@ public class TmdbData {
     }
 
     public static class Status {
+        // API Status
+        // https://www.themoviedb.org/documentation/api/status-codes
+        public static final String CODE = "status_code";
+        public static final String MSG = "status_message";
+
         private boolean mDataValid;
         // private int mStatusCode;
         private String mStatusMessage;
@@ -102,6 +95,10 @@ public class TmdbData {
     }
 
     public static class Config implements Parcelable {
+        // API Configuration
+        public static final String IMAGES = "images";
+        public static final String SECURE_BASE_URL = "secure_base_url";
+
         private String mSecureBaseUrl;
 
         String getSecureBaseUrl() {
@@ -147,10 +144,20 @@ public class TmdbData {
     }
 
     public static class Movie implements Parcelable {
+        // API Movie
+        // https://developers.themoviedb.org/3/movies/get-popular-movies
+        // https://developers.themoviedb.org/3/movies/get-top-rated-movies
+        public static final String RESULTS = "results";
+        public static final String ID = "id";
+        public static final String TITLE = "title";
+        public static final String RELEASE_DATE = "release_date";
+        public static final String POSTER_PATH = "poster_path";
+        public static final String VOTE_AVERAGE = "vote_average";
+        public static final String OVERVIEW = "overview";
 
         /* Movie API properties */
         // private int mVoteCount;
-        // private int mId;
+        private int mId;
         // private boolean mVideo;
         private double mVoteAverage;
         private String mTitle;
@@ -163,6 +170,10 @@ public class TmdbData {
         // private boolean mAdult;
         private String mOverview;
         private String mReleaseDate;
+
+        // Id
+        public int getId() { return mId; }
+        public void setId(int id) { mId = id; }
 
         // Title
         public String getTitle() { return mTitle; }
@@ -193,6 +204,7 @@ public class TmdbData {
         public Movie() { }
 
         private Movie(Parcel in) {
+            mId = in.readInt();
             mTitle = in.readString();
             mOverview = in.readString();
             mPosterPath = in.readString();
@@ -202,6 +214,7 @@ public class TmdbData {
 
         @Override
         public void writeToParcel(Parcel parcel, int flags) {
+            parcel.writeInt(mId);
             parcel.writeString(mTitle);
             parcel.writeString(mOverview);
             parcel.writeString(mPosterPath);
@@ -220,6 +233,61 @@ public class TmdbData {
                 return new Movie[size];
             }
         };
+
+    }
+
+    public static class Video {
+        // API Movie Videos
+        // https://developers.themoviedb.org/3/movies/get-movie-videos
+        public static final String ID = "id";
+        public static final String NAME = "name";
+        public static final String KEY = "key";
+
+        private String mId;
+        private String mName;
+        private String mKey;
+
+        // Id
+        public String getId() { return mId; }
+        public void setId(String id) { mId = id; }
+
+        // Name
+        public String getName() { return mName; }
+        public void setName(String name) { mName = name; }
+
+        // Key
+        public String getKey() { return mKey; }
+        public void setKey(String key) { mKey = key; }
+    }
+
+    public static class Review {
+        // API Movie Reviews
+        // https://developers.themoviedb.org/3/movies/get-movie-reviews
+        public static final String ID = "id";
+        public static final String AUTHOR = "author";
+        public static final String CONTENT = "content";
+        public static final String URL = "url";
+
+        private String mId;
+        private String mAuthor;
+        private String mContent;
+        private String mUrl;
+
+        // Id
+        public String getId() { return mId; }
+        public void setId(String id) { mId = id; }
+
+        // Author
+        public String getAuthor() { return mAuthor; }
+        public void setAuthor(String author) { mAuthor = author; }
+
+        // Content
+        public String getContent() { return mContent; }
+        public void setContent(String content) { mContent = content; }
+
+        // URL
+        public String getUrl() { return mUrl; }
+        public void setUrl(String url) { mUrl = url; }
 
     }
 }

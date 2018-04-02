@@ -20,5 +20,7 @@
 
     <string name="desc_movie_poster">Movie poster</string>
 
+    <!-- Content authority -->
+    <string name="content_authority">cz.jtek.popularmovies</string>
 
 </resources>
