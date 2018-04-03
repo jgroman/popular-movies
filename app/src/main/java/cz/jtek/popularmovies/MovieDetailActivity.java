@@ -26,6 +26,8 @@ public class MovieDetailActivity extends AppCompatActivity
 
     private static final String TAG = MovieDetailActivity.class.getSimpleName();
 
+    public static final String BUNDLE_MOVIE_ID = "movie-id";
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,15 +38,31 @@ public class MovieDetailActivity extends AppCompatActivity
 
             if (null == savedInstanceState) {
 
-                MovieDetailFragment detail = new MovieDetailFragment();
                 Intent startingIntent = getIntent();
-                if (startingIntent != null) {
-                    detail.setArguments(startingIntent.getExtras());
+                int movieId = 0;
+
+                if (startingIntent == null) {
+                    return;
                 }
 
+                if (startingIntent.hasExtra(MainActivity.EXTRA_MOVIE)) {
+                    TmdbData.Movie movie = startingIntent.getParcelableExtra(MainActivity.EXTRA_MOVIE);
+                    if (movie != null) {
+                        movieId = movie.getId();
+                    }
+                }
+
+                MovieDetailFragment detail = new MovieDetailFragment();
+                detail.setArguments(startingIntent.getExtras());
+
+                Bundle fragmentBundle = new Bundle();
+                fragmentBundle.putInt(BUNDLE_MOVIE_ID, movieId);
+
                 MovieVideoFragment video = new MovieVideoFragment();
+                video.setArguments(fragmentBundle);
 
                 MovieReviewFragment review = new MovieReviewFragment();
+                video.setArguments(fragmentBundle);
 
                 // Add fragments to detail fragment container
                 getSupportFragmentManager().beginTransaction()

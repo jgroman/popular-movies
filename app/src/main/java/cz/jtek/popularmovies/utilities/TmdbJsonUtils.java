@@ -190,40 +190,14 @@ public class TmdbJsonUtils {
                 }
 
                 Log.e(TAG, "TMDb status: " + statusCode + " (" + statusMsg + ")");
-                return new TmdbJsonResult<>(null, new TmdbData.TmdbStatusException(statusCode, statusMsg));
+                return new TmdbJsonResult<>(null,
+                        new TmdbData.TmdbStatusException(statusCode, statusMsg));
             }
 
             // Parsing returned data
             if (videoJson.has(TmdbData.Video.RESULTS)) {
                 JSONArray results = videoJson.getJSONArray(TmdbData.Movie.RESULTS);
-                int resultCount = results.length();
-
-                for (int i=0; i<resultCount; i++) {
-                    JSONObject videoObj = results.getJSONObject(i);
-                    TmdbData.Video video = new TmdbData.Video();
-
-                    if (videoObj.has(TmdbData.Video.ID)) {
-                        video.setId(videoObj.getString(TmdbData.Video.ID));
-                    }
-
-                    if (videoObj.has(TmdbData.Video.NAME)) {
-                        video.setName(videoObj.getString(TmdbData.Video.NAME));
-                    }
-
-                    if (videoObj.has(TmdbData.Video.KEY)) {
-                        video.setKey(videoObj.getString(TmdbData.Video.KEY));
-                    }
-
-                    if (videoObj.has(TmdbData.Video.SITE)) {
-                        video.setSite(videoObj.getString(TmdbData.Video.SITE));
-                    }
-
-                    if (videoObj.has(TmdbData.Video.TYPE)) {
-                        video.setType(videoObj.getString(TmdbData.Video.TYPE));
-                    }
-
-                    videoList.add(video);
-                }
+                videoList = TmdbData.Video.fromJson(results);
             }
 
         } catch (JSONException ex) {

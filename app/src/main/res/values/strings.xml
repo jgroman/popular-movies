@@ -11,6 +11,8 @@
     <!-- Detail view -->
     <string name="detail_vote_average">Vote Average</string>
     <string name="detail_release_date">Release Date</string>
+    <string name="detail_video_trailers">Video Trailers</string>
+    <string name="detail_movie_reviews">Movie Reviews</string>
 
     <!-- Preferences -->
     <string name="pref_sort_order_title">Sort Order</string>

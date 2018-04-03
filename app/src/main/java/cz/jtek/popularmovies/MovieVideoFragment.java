@@ -20,7 +20,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -29,12 +31,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,7 +44,7 @@ import cz.jtek.popularmovies.utilities.MockDataUtils;
 import cz.jtek.popularmovies.utilities.NetworkUtils;
 import cz.jtek.popularmovies.utilities.TmdbJsonUtils;
 
-public class MovieVideoFragment extends ListFragment
+public class MovieVideoFragment extends Fragment
     implements LoaderManager.LoaderCallbacks<MovieVideoFragment.AsyncTaskResult<List<TmdbData.Video>>> {
 
     private static final String TAG = MovieVideoFragment.class.getSimpleName();
@@ -50,7 +52,10 @@ public class MovieVideoFragment extends ListFragment
     private Context mContext;
     OnVideoSelectedListener mCallback;
 
-    private ListView mVideoList;
+    List<TmdbData.Video> mVideoList;
+    VideoListItemAdapter mVideoListItemAdapter;
+
+    private ListView mVideoListView;
     private TextView mErrorMessage;
     private ProgressBar mLoadingIndicator;
 
@@ -82,35 +87,56 @@ public class MovieVideoFragment extends ListFragment
                              @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
 
-        mContext = getActivity().getApplicationContext();
+        Activity activity = getActivity();
+
+        if (null == activity) {
+            return null;
+        }
+
+        mContext = activity.getApplicationContext();
 
         View view = inflater.inflate(R.layout.fragment_movie_video, container, false);
 
-        mVideoList = view.findViewById(R.id.lv_detail_videos);
+        // Video listview
+        mVideoListView = view.findViewById(R.id.lv_detail_videos);
+        mVideoList = new ArrayList<>();
+        mVideoListItemAdapter = new VideoListItemAdapter(mContext, mVideoList);
+        mVideoListView.setAdapter(mVideoListItemAdapter);
+
         mErrorMessage = view.findViewById(R.id.tv_video_error_message);
         mLoadingIndicator = view.findViewById(R.id.pb_video_loading);
+
+        Bundle args = getArguments();
+        int movieId = 0;
+
+        if (args != null) {
+            if (args.containsKey(MovieDetailActivity.BUNDLE_MOVIE_ID)) {
+                movieId = args.getInt(MovieDetailActivity.BUNDLE_MOVIE_ID);
+            }
+        }
 
         // Check for network availability
         if (!NetworkUtils.isNetworkAvailable(mContext)) {
             // Network is not available
             showErrorMessage(getResources().getString(R.string.error_msg_no_network));
         } else {
-            /*
+
             // Loader
-            LoaderManager.LoaderCallbacks<MovieVideoFragment.AsyncTaskResult<List<TmdbData.Video>>> loaderCallbacks = MainActivity.this;
+            LoaderManager.LoaderCallbacks<MovieVideoFragment.AsyncTaskResult<List<TmdbData.Video>>> loaderCallbacks = this;
 
             Bundle loaderArgsBundle = new Bundle();
+
             // Store movie id into loader args bundle
-            loaderArgsBundle.putInt(LOADER_BUNDLE_MOVIE_ID, mApiResultsPageToLoad);
+            loaderArgsBundle.putInt(LOADER_BUNDLE_MOVIE_ID, movieId);
             // Prepare loader
-            getSupportLoaderManager().initLoader(VIDEOLIST_LOADER_ID, loaderArgsBundle, loaderCallbacks);
-            */
+            getLoaderManager().initLoader(VIDEOLIST_LOADER_ID, loaderArgsBundle, loaderCallbacks);
+
         }
 
         return(view);
     }
 
-    @Override
+    //@Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         mCallback.onVideoSelected(position);
     }
@@ -123,14 +149,13 @@ public class MovieVideoFragment extends ListFragment
 
     @Override
     public void onLoadFinished(Loader<AsyncTaskResult<List<TmdbData.Video>>> loader,
-                               AsyncTaskResult<List<TmdbData.Video>> result) {
-        mLoadingIndicator.setVisibility(View.INVISIBLE);
-        //mMovieGridAdapter.setMovieData(tmdbData);
-        //mTmdbData = tmdbData;
+                               AsyncTaskResult<List<TmdbData.Video>> data) {
 
-        if (result.hasException()) {
+        mLoadingIndicator.setVisibility(View.INVISIBLE);
+
+        if (data.hasException()) {
             // There was an error during data loading
-            Exception ex = result.getException();
+            Exception ex = data.getException();
             if (ex instanceof TmdbData.TmdbStatusException) {
                 // TMDb API error
                 showErrorMessage(ex.getMessage());
@@ -139,6 +164,7 @@ public class MovieVideoFragment extends ListFragment
             }
         } else {
             // Valid results received
+            mVideoListItemAdapter.addAll(data.getResult());
             showMovieVideosView();
         }
 
@@ -157,7 +183,7 @@ public class MovieVideoFragment extends ListFragment
         // Hide error message
         mErrorMessage.setVisibility(View.INVISIBLE);
         // Display video list
-        mVideoList.setVisibility(View.VISIBLE);
+        mVideoListView.setVisibility(View.VISIBLE);
     }
 
     /**
@@ -165,7 +191,7 @@ public class MovieVideoFragment extends ListFragment
      */
     private void showErrorMessage(String errorMessage) {
         // Hide video list
-        mVideoList.setVisibility(View.INVISIBLE);
+        mVideoListView.setVisibility(View.INVISIBLE);
         // Display error message
         mErrorMessage.setVisibility(View.VISIBLE);
 
@@ -174,7 +200,31 @@ public class MovieVideoFragment extends ListFragment
         }
     }
 
+    class VideoListItemAdapter extends ArrayAdapter<TmdbData.Video> {
 
+        VideoListItemAdapter(Context context, List<TmdbData.Video> videoList) {
+            super(context, R.layout.item_movie_video, videoList);
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+
+            if (convertView == null) {
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_movie_video, parent, false);
+            }
+
+            TextView videoNameTextView = convertView.findViewById(R.id.tv_video_item_name);
+
+            TmdbData.Video video = getItem(position);
+            videoNameTextView.setText(video.getName());
+
+            return convertView;
+        }
+    }
+
+    // AsyncTaskLoader result wrapper
+    // Allows returning either result or exception
     public static class AsyncTaskResult<T> {
         private final T result;
         private final Exception exception;
@@ -217,7 +267,7 @@ public class MovieVideoFragment extends ListFragment
 
         @Override
         protected void onStartLoading() {
-            if (mResult.hasResult() || mResult.hasException()) {
+            if (mResult != null && (mResult.hasResult() || mResult.hasException())) {
                 // If there are already data available, deliver them
                 deliverResult(mResult);
             } else {

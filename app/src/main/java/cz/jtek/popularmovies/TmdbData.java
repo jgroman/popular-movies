@@ -18,6 +18,11 @@ package cz.jtek.popularmovies;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -251,11 +256,11 @@ public class TmdbData {
         // API Movie Videos
         // https://developers.themoviedb.org/3/movies/get-movie-videos
         public static final String RESULTS = "results";
-        public static final String ID = "id";
-        public static final String KEY = "key";
-        public static final String NAME = "name";
-        public static final String SITE = "site";
-        public static final String TYPE = "type";
+        static final String ID = "id";
+        static final String KEY = "key";
+        static final String NAME = "name";
+        static final String SITE = "site";
+        static final String TYPE = "type";
 
         private String mId;
         private String mName;
@@ -282,6 +287,49 @@ public class TmdbData {
         // Type
         public String getType() { return mType; }
         public void setType(String type) { mType = type; }
+
+        // Constructor converting JSON object to object instance
+        public static Video fromJson(JSONObject jsonObject)
+                throws JSONException {
+            Video v = new Video();
+
+            if (jsonObject.has(ID)) {
+                v.mId = jsonObject.getString(ID);
+            }
+
+            if (jsonObject.has(NAME)) {
+                v.mName = jsonObject.getString(NAME);
+            }
+
+            if (jsonObject.has(KEY)) {
+                v.mKey = jsonObject.getString(KEY);
+            }
+
+            if (jsonObject.has(SITE)) {
+                v.mSite = jsonObject.getString(SITE);
+            }
+
+            if (jsonObject.has(TYPE)) {
+                v.mType = jsonObject.getString(TYPE);
+            }
+
+            return v;
+        }
+
+        // Factory method for converting JSON object array to list of object instances
+        public static ArrayList<Video> fromJson(JSONArray jsonArray)
+                throws JSONException {
+            JSONObject videoJson;
+
+            int objectCount = jsonArray.length();
+            ArrayList<Video> videos = new ArrayList<>(objectCount);
+            for (int i = 0; i < objectCount; i++) {
+                videoJson = jsonArray.getJSONObject(i);
+                Video video = Video.fromJson(videoJson);
+                if (video != null) { videos.add(video); }
+            }
+            return videos;
+        }
 
     }
 

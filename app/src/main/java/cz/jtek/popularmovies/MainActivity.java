@@ -45,6 +45,7 @@ import android.widget.TextView;
 import java.io.IOException;
 import java.net.URL;
 
+import cz.jtek.popularmovies.utilities.MockDataUtils;
 import cz.jtek.popularmovies.utilities.NetworkUtils;
 import cz.jtek.popularmovies.utilities.TmdbJsonUtils;
 
@@ -382,21 +383,21 @@ public class MainActivity
                 if (movieResultPage == 1) {
 
                     // Load current API configuration
-                    URL configUrl = NetworkUtils.buildConfigurationUrl();
-                    String jsonConfig = NetworkUtils.getResponseFromHttpUrl(configUrl);
+                    // TODO URL configUrl = NetworkUtils.buildConfigurationUrl();
+                    // TODO String jsonConfig = NetworkUtils.getResponseFromHttpUrl(configUrl);
 
                     // Example mock request used for debugging to avoid sending network queries
-                    // String jsonConfig = MockDataUtils.getMockJson(getContext(), "mock_configuration");
+                    String jsonConfig = MockDataUtils.getMockJson(getContext(), "mock_configuration");
 
                     TmdbJsonUtils.getConfigFromJson(mTmdbData, jsonConfig);
                 }
 
                 // Load movie result page
-                URL movieUrl = NetworkUtils.buildMovieUrl(getContext(), sortOrder, movieResultPage);
-                String jsonMovies = NetworkUtils.getResponseFromHttpUrl(movieUrl);
+                // TODO URL movieUrl = NetworkUtils.buildMovieUrl(getContext(), sortOrder, movieResultPage);
+                // TODO String jsonMovies = NetworkUtils.getResponseFromHttpUrl(movieUrl);
 
                 // Example mock request used for debugging to avoid sending network queries
-                // String jsonMovies = MockDataUtils.getMockJson(getContext(), "mock_popular");
+                String jsonMovies = MockDataUtils.getMockJson(getContext(), "mock_popular");
 
                 TmdbJsonUtils.getMovieListFromJson(mTmdbData, jsonMovies);
 
