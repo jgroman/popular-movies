@@ -125,7 +125,7 @@ public class MainActivity
         sp.registerOnSharedPreferenceChangeListener(this);
 
         // Check for network availability
-        if (!isNetworkAvailable()) {
+        if (!NetworkUtils.isNetworkAvailable(this)) {
             // Network is not available
             showErrorMessage(getResources().getString(R.string.error_msg_no_network));
         } else {
@@ -166,7 +166,7 @@ public class MainActivity
             mApiResultsPageToLoad = 1;
 
             // Check for network availability
-            if (!isNetworkAvailable()) {
+            if (!NetworkUtils.isNetworkAvailable(this)) {
                 // Network is not available
                 showErrorMessage(getResources().getString(R.string.error_msg_no_network));
             } else {
@@ -327,23 +327,6 @@ public class MainActivity
 
         return width;
     }
-
-    /**
-     * This method test for network availability
-     *
-     * @return true if network connection available
-     */
-    private boolean isNetworkAvailable() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        if (cm != null) {
-            NetworkInfo netInfo = cm.getActiveNetworkInfo();
-            return netInfo != null && netInfo.isConnected();
-        }
-
-        return false;
-    }
-
 
     /**
      * TMDb API data async task loader implementation

@@ -17,6 +17,8 @@
 package cz.jtek.popularmovies.utilities;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.util.Log;
 
@@ -145,6 +147,16 @@ public final class NetworkUtils {
     }
 
     /**
+     *
+     * @param movieId
+     * @return
+     */
+    public static URL buildMovieVideosUrl(int movieId) {
+        // TODO
+        return null;
+    }
+
+    /**
      * This method returns the entire result from the HTTP response.
      *
      * @param url The URL to fetch the HTTP response from.
@@ -184,6 +196,22 @@ public final class NetworkUtils {
         } finally {
             urlConnection.disconnect();
         }
+    }
+
+    /**
+     * This method tests for network availability
+     *
+     * @return true if network connection available
+     */
+    public static boolean isNetworkAvailable(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        if (cm != null) {
+            NetworkInfo netInfo = cm.getActiveNetworkInfo();
+            return netInfo != null && netInfo.isConnected();
+        }
+
+        return false;
     }
 
 }
