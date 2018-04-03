@@ -16,20 +16,40 @@
      limitations under the License.
 -->
 
-<ScrollView
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    >
 
-    <LinearLayout
-        android:id="@+id/detail_container"
+    <!-- Main listview holding video list -->
+    <ListView
+        android:id="@+id/lv_detail_videos"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         >
 
-        <!-- Detail fragments will be placed here -->
+    </ListView>
 
-    </LinearLayout>
+    <!-- Error messages -->
+    <TextView
+        android:id="@+id/tv_video_error_message"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="@string/error_message"
+        android:visibility="invisible"
+        android:gravity="center"
+        android:textSize="24sp"
+        android:textColor="@color/red"
+        />
 
-</ScrollView>
+    <!-- Loading indicator -->
+    <ProgressBar
+        android:id="@+id/pb_video_loading"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_gravity="center"
+        android:visibility="invisible"
+        />
+
+</FrameLayout>

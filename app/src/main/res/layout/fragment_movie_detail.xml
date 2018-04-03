@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+     Copyright (C) 2018 Jaroslav Groman
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    >
+
+    <TextView
+        android:id="@+id/tv_detail_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:gravity="center_horizontal"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        tools:text="Movie title"
+        />
+
+    <android.support.v7.widget.AppCompatImageView
+        android:id="@+id/iv_detail_poster"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="8dp"
+        android:paddingStart="8dp"
+        android:paddingRight="8dp"
+        android:paddingEnd="8dp"
+        android:layout_below="@id/tv_detail_title"
+        android:contentDescription="@string/desc_movie_poster"
+        tools:src="@drawable/ic_poster_placeholder"
+        />
+
+    <TextView
+        android:id="@+id/tv_detail_vote_average_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_detail_title"
+        android:layout_toEndOf="@id/iv_detail_poster"
+        android:layout_toRightOf="@id/iv_detail_poster"
+        android:gravity="center_horizontal"
+        android:text="@string/detail_vote_average"
+        />
+
+    <TextView
+        android:id="@+id/tv_detail_vote_average"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/iv_detail_poster"
+        android:layout_toRightOf="@id/iv_detail_poster"
+        android:layout_below="@id/tv_detail_vote_average_title"
+        android:gravity="center_horizontal"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:textColor="@color/black"
+        tools:text="5.5"
+        />
+
+    <TextView
+        android:id="@+id/tv_detail_release_date_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="8dp"
+        android:layout_toEndOf="@id/iv_detail_poster"
+        android:layout_toRightOf="@id/iv_detail_poster"
+        android:layout_below="@id/tv_detail_vote_average"
+        android:gravity="center_horizontal"
+        android:text="@string/detail_release_date"
+        />
+
+    <TextView
+        android:id="@+id/tv_detail_release_date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/iv_detail_poster"
+        android:layout_toRightOf="@id/iv_detail_poster"
+        android:layout_below="@id/tv_detail_release_date_title"
+        android:gravity="center_horizontal"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:textColor="@color/black"
+        tools:text="2018-03-03"
+        />
+
+    <TextView
+        android:id="@+id/tv_detail_overview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/iv_detail_poster"
+        android:padding="8dp"
+        android:textColor="@color/black"
+        />
+
+</RelativeLayout>

@@ -20,21 +20,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.text.SpannableString;
-import android.text.style.LeadingMarginSpan;
-import android.util.Log;
-import android.widget.ImageView;
-import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
-
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-
-public class MovieDetailActivity extends AppCompatActivity {
+public class MovieDetailActivity extends AppCompatActivity
+    implements MovieVideoFragment.OnVideoSelectedListener {
 
     private static final String TAG = MovieDetailActivity.class.getSimpleName();
 
@@ -44,61 +32,34 @@ public class MovieDetailActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_detail);
 
-        Intent startingIntent = getIntent();
+        if (findViewById(R.id.detail_container) != null) {
 
-        if (startingIntent != null) {
-            if (startingIntent.hasExtra(MainActivity.EXTRA_MOVIE)
-                    && startingIntent.hasExtra(MainActivity.EXTRA_CONFIG)) {
+            if (null == savedInstanceState) {
 
-                // TMDb configuration contains base URL for posters
-                TmdbData.Config config = startingIntent.getParcelableExtra(MainActivity.EXTRA_CONFIG);
-                TmdbData.Movie movie = startingIntent.getParcelableExtra(MainActivity.EXTRA_MOVIE);
-
-                if (movie != null) {
-                    // Movie title
-                    TextView titleTextView = findViewById(R.id.tv_detail_title);
-                    titleTextView.setText(movie.getTitle());
-
-                    // Poster
-                    if (config != null) {
-                        ImageView posterImageView = findViewById(R.id.iv_detail_poster);
-                        String posterBaseUrl = config.getSecureBaseUrl() + TmdbData.Config.getPosterSize();
-                        Picasso.with(this)
-                                .load(posterBaseUrl + movie.getPosterPath())
-                                .into(posterImageView);
-                    }
-
-                    // Vote average
-                    TextView voteAverageTextView = findViewById(R.id.tv_detail_vote_average);
-                    voteAverageTextView.setText(String.format(Locale.getDefault(),"%.1f", movie.getVoteAverage()));
-
-                    // Release date
-                    TextView releaseTextView = findViewById(R.id.tv_detail_release_date);
-
-                    String releaseDateString = movie.getReleaseDate();
-
-                    DateFormat dateFormatAPI = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-                    DateFormat dateFormatOutput = DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault());
-
-                    try {
-                        Date releaseDate = dateFormatAPI.parse(releaseDateString);
-                        releaseTextView.setText(dateFormatOutput.format(releaseDate));
-                    } catch (ParseException pe) {
-                        Log.e(TAG, "Release date parse exception.");
-                    }
-
-                    // Overview
-                    TextView overviewTextView = findViewById(R.id.tv_detail_overview);
-
-                    String overview = movie.getOverview();
-                    SpannableString overviewSpannable = new SpannableString(overview);
-                    overviewSpannable.setSpan(new LeadingMarginSpan.Standard(24, 0),0, overview.length(),0);
-
-                    overviewTextView.setText(overviewSpannable);
-
+                MovieDetailFragment detail = new MovieDetailFragment();
+                Intent startingIntent = getIntent();
+                if (startingIntent != null) {
+                    detail.setArguments(startingIntent.getExtras());
                 }
-            }
 
+                MovieVideoFragment video = new MovieVideoFragment();
+
+                MovieReviewFragment review = new MovieReviewFragment();
+
+                // Add fragments to detail fragment container
+                getSupportFragmentManager().beginTransaction()
+                        .add(R.id.detail_container, detail)
+                        .add(R.id.detail_container, video)
+                        .add(R.id.detail_container, review)
+                        .commit();
+            }
         }
+
+
+    }
+
+    @Override
+    public void onVideoSelected(int position) {
+
     }
 }

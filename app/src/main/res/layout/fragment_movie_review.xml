@@ -16,20 +16,24 @@
      limitations under the License.
 -->
 
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    >
 
-    <LinearLayout
-        android:id="@+id/detail_container"
+    <TextView
+        android:id="@+id/tv_video_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        >
+        android:padding="16dp"
+        android:gravity="center_horizontal"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        tools:text="Movie title"
+        android:text="reviews"
+        />
 
-        <!-- Detail fragments will be placed here -->
-
-    </LinearLayout>
-
-</ScrollView>
+</RelativeLayout>
