@@ -22,6 +22,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import cz.jtek.popularmovies.TmdbData;
@@ -32,6 +33,30 @@ import cz.jtek.popularmovies.TmdbData;
 public class TmdbJsonUtils {
 
     private static final String TAG = TmdbJsonUtils.class.getSimpleName();
+
+    // JSON result wrapper
+    // Allows returning either result or exception
+    public static class TmdbJsonResult<T> {
+        private final T result;
+        private final Exception exception;
+
+        public TmdbJsonResult(T result, Exception exception) {
+            this.result = result;
+            this.exception = exception;
+        }
+
+        public T getResult() {
+            return result;
+        }
+
+        public Exception getException() {
+            return exception;
+        }
+
+        public boolean hasException() {
+            return exception != null;
+        }
+    }
 
     /**
      * Parses TMDb API /configuration reply and updates tmdbData Config values
@@ -147,5 +172,65 @@ public class TmdbJsonUtils {
         }
 
         return moviesList;
+    }
+
+    public static TmdbJsonResult<List<TmdbData.Video>> getVideoListFromJson(String tmdbJson) {
+
+        List<TmdbData.Video> videoList = new ArrayList<>();
+
+        try {
+            JSONObject videoJson = new JSONObject(tmdbJson);
+
+            // Check whether TMDb API reports an error
+            if (videoJson.has(TmdbData.Status.CODE)) {
+                int statusCode = videoJson.getInt(TmdbData.Status.CODE);
+                String statusMsg = "";
+                if (videoJson.has(TmdbData.Status.MSG)) {
+                    statusMsg = videoJson.getString(TmdbData.Status.MSG);
+                }
+
+                Log.e(TAG, "TMDb status: " + statusCode + " (" + statusMsg + ")");
+                return new TmdbJsonResult<>(null, new TmdbData.TmdbStatusException(statusCode, statusMsg));
+            }
+
+            // Parsing returned data
+            if (videoJson.has(TmdbData.Video.RESULTS)) {
+                JSONArray results = videoJson.getJSONArray(TmdbData.Movie.RESULTS);
+                int resultCount = results.length();
+
+                for (int i=0; i<resultCount; i++) {
+                    JSONObject videoObj = results.getJSONObject(i);
+                    TmdbData.Video video = new TmdbData.Video();
+
+                    if (videoObj.has(TmdbData.Video.ID)) {
+                        video.setId(videoObj.getString(TmdbData.Video.ID));
+                    }
+
+                    if (videoObj.has(TmdbData.Video.NAME)) {
+                        video.setName(videoObj.getString(TmdbData.Video.NAME));
+                    }
+
+                    if (videoObj.has(TmdbData.Video.KEY)) {
+                        video.setKey(videoObj.getString(TmdbData.Video.KEY));
+                    }
+
+                    if (videoObj.has(TmdbData.Video.SITE)) {
+                        video.setSite(videoObj.getString(TmdbData.Video.SITE));
+                    }
+
+                    if (videoObj.has(TmdbData.Video.TYPE)) {
+                        video.setType(videoObj.getString(TmdbData.Video.TYPE));
+                    }
+
+                    videoList.add(video);
+                }
+            }
+
+        } catch (JSONException ex) {
+            Log.e(TAG, "JSONException parsing configuration.");
+            return new TmdbJsonResult<>(null, ex);
+        }
+
+        return new TmdbJsonResult<>(videoList, null);
     }
 }

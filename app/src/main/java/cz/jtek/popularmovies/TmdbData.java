@@ -55,6 +55,17 @@ public class TmdbData {
         return mMovieList;
     }
 
+    public static class TmdbStatusException extends Exception {
+        public TmdbStatusException(String message) {
+            super(message);
+        }
+
+        public TmdbStatusException(int statusCode, String statusMessage) {
+            super("TMDb status: " + statusCode + " (" + statusMessage + ")");
+        }
+
+    }
+
     public static class Status {
         // API Status
         // https://www.themoviedb.org/documentation/api/status-codes
@@ -239,13 +250,18 @@ public class TmdbData {
     public static class Video {
         // API Movie Videos
         // https://developers.themoviedb.org/3/movies/get-movie-videos
+        public static final String RESULTS = "results";
         public static final String ID = "id";
-        public static final String NAME = "name";
         public static final String KEY = "key";
+        public static final String NAME = "name";
+        public static final String SITE = "site";
+        public static final String TYPE = "type";
 
         private String mId;
         private String mName;
         private String mKey;
+        private String mSite;
+        private String mType;
 
         // Id
         public String getId() { return mId; }
@@ -258,6 +274,15 @@ public class TmdbData {
         // Key
         public String getKey() { return mKey; }
         public void setKey(String key) { mKey = key; }
+
+        // Site
+        public String getSite() { return mSite; }
+        public void setSite(String site) { mSite = site; }
+
+        // Type
+        public String getType() { return mType; }
+        public void setType(String type) { mType = type; }
+
     }
 
     public static class Review {
