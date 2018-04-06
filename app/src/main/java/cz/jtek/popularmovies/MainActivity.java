@@ -48,6 +48,7 @@ import java.net.URL;
 import cz.jtek.popularmovies.utilities.MockDataUtils;
 import cz.jtek.popularmovies.utilities.NetworkUtils;
 import cz.jtek.popularmovies.utilities.TmdbJsonUtils;
+import cz.jtek.popularmovies.utilities.UIUtils;
 
 public class MainActivity
         extends AppCompatActivity
@@ -90,7 +91,7 @@ public class MainActivity
         mLoadingIndicator = findViewById(R.id.pb_loading);
 
         // Our grid layout uses full display width
-        int displayWidth = getDisplayWidth(this);
+        int displayWidth = UIUtils.getDisplayWidth(this);
 
         int gridColumns = DEFAULT_GRID_COLUMNS;
         int optimalWidth = TmdbData.Config.getPosterWidth();
@@ -300,34 +301,6 @@ public class MainActivity
         }
     }
 
-    /**
-     * This method returns device display width
-     *
-     * @param context Context
-     * @return Display width
-     */
-    @SuppressLint("ObsoleteSdkInt")
-    private int getDisplayWidth(Context context) {
-
-        int width = 0;
-        Display display;
-
-        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-
-        if (wm != null) {
-            display = wm.getDefaultDisplay();
-
-            if (android.os.Build.VERSION.SDK_INT >= 13) {
-                Point size = new Point();
-                display.getSize(size);
-                width = size.x;
-            } else {
-                width = display.getWidth();  // deprecated
-            }
-        }
-
-        return width;
-    }
 
     /**
      * TMDb API data async task loader implementation

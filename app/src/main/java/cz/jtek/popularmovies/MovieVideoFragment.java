@@ -32,6 +32,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -43,6 +44,7 @@ import java.util.List;
 import cz.jtek.popularmovies.utilities.MockDataUtils;
 import cz.jtek.popularmovies.utilities.NetworkUtils;
 import cz.jtek.popularmovies.utilities.TmdbJsonUtils;
+import cz.jtek.popularmovies.utilities.UIUtils;
 
 public class MovieVideoFragment extends Fragment
     implements LoaderManager.LoaderCallbacks<MovieVideoFragment.AsyncTaskResult<List<TmdbData.Video>>> {
@@ -58,6 +60,8 @@ public class MovieVideoFragment extends Fragment
     private ListView mVideoListView;
     private TextView mErrorMessage;
     private ProgressBar mLoadingIndicator;
+
+    private int mViewWidth;
 
     // AsyncLoader
     private static final int VIDEOLIST_LOADER_ID = 1;
@@ -97,11 +101,14 @@ public class MovieVideoFragment extends Fragment
 
         View view = inflater.inflate(R.layout.fragment_movie_video, container, false);
 
+        mViewWidth = UIUtils.getDisplayWidth(mContext);
+
         // Video listview
-        mVideoListView = view.findViewById(R.id.lv_detail_videos);
         mVideoList = new ArrayList<>();
-        mVideoListItemAdapter = new VideoListItemAdapter(mContext, mVideoList);
+        mVideoListItemAdapter = new VideoListItemAdapter(mContext, R.layout.item_movie_video, mVideoList);
+        mVideoListView = view.findViewById(R.id.lv_detail_videos);
         mVideoListView.setAdapter(mVideoListItemAdapter);
+        UIUtils.showListViewFullHeight(mVideoListView, mViewWidth);
 
         mErrorMessage = view.findViewById(R.id.tv_video_error_message);
         mLoadingIndicator = view.findViewById(R.id.pb_video_loading);
@@ -120,17 +127,13 @@ public class MovieVideoFragment extends Fragment
             // Network is not available
             showErrorMessage(getResources().getString(R.string.error_msg_no_network));
         } else {
-
-            // Loader
+            // Loader initialization
             LoaderManager.LoaderCallbacks<MovieVideoFragment.AsyncTaskResult<List<TmdbData.Video>>> loaderCallbacks = this;
-
-            Bundle loaderArgsBundle = new Bundle();
-
             // Store movie id into loader args bundle
+            Bundle loaderArgsBundle = new Bundle();
             loaderArgsBundle.putInt(LOADER_BUNDLE_MOVIE_ID, movieId);
-            // Prepare loader
+            // Prepare loader to be started
             getLoaderManager().initLoader(VIDEOLIST_LOADER_ID, loaderArgsBundle, loaderCallbacks);
-
         }
 
         return(view);
@@ -165,6 +168,8 @@ public class MovieVideoFragment extends Fragment
         } else {
             // Valid results received
             mVideoListItemAdapter.addAll(data.getResult());
+            mVideoListItemAdapter.notifyDataSetChanged();
+            UIUtils.showListViewFullHeight(mVideoListView, mViewWidth);
             showMovieVideosView();
         }
 
@@ -200,26 +205,36 @@ public class MovieVideoFragment extends Fragment
         }
     }
 
+    /**
+     * Custom ArrayAdapter for video list
+     */
     class VideoListItemAdapter extends ArrayAdapter<TmdbData.Video> {
 
-        VideoListItemAdapter(Context context, List<TmdbData.Video> videoList) {
-            super(context, R.layout.item_movie_video, videoList);
+        private final int mResource;
+
+        VideoListItemAdapter(Context context, int resource, List<TmdbData.Video> videoList) {
+            super(context, resource, videoList);
+            mResource = resource;
         }
 
         @NonNull
         @Override
         public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
 
-            if (convertView == null) {
-                convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_movie_video, parent, false);
+            View rowView = convertView;
+
+            if (rowView == null) {
+                rowView = LayoutInflater.from(getContext()).inflate(mResource, parent, false);
             }
 
-            TextView videoNameTextView = convertView.findViewById(R.id.tv_video_item_name);
-
             TmdbData.Video video = getItem(position);
-            videoNameTextView.setText(video.getName());
 
-            return convertView;
+            if (video != null) {
+                TextView videoNameTextView = rowView.findViewById(R.id.tv_video_item_name);
+                videoNameTextView.setText(video.getName());
+            }
+
+            return rowView;
         }
     }
 

@@ -29,14 +29,12 @@ import java.util.List;
 
 public class TmdbData {
 
+    private static final String TAG = TmdbData.class.getSimpleName();
 
     // API Configuration
     private static final String DEFAULT_IMAGE_SIZE = "w185";
     private static final int DEFAULT_MOVIE_POSTER_WIDTH = 185;
     private static final int DEFAULT_MOVIE_POSTER_HEIGHT = 278;
-
-
-
 
     final private TmdbData.Config mConfig;
     final private List<Movie> mMovieList;

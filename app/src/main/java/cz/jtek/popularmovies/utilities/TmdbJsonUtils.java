@@ -174,6 +174,12 @@ public class TmdbJsonUtils {
         return moviesList;
     }
 
+    /**
+     * Parses TMDb API /movie/{movie_id}/videos reply and updates tmdbData Config values
+     *
+     * @param tmdbJson              API JSON response string
+     * @return List of Tmdb.Video objects or exception in TmdbJsonResult object
+     */
     public static TmdbJsonResult<List<TmdbData.Video>> getVideoListFromJson(String tmdbJson) {
 
         List<TmdbData.Video> videoList = new ArrayList<>();

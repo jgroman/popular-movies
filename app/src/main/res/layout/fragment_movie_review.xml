@@ -23,6 +23,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     >
 
+    <View style="@style/HorizontalDivider" />
+
     <TextView
         android:id="@+id/tv_video_title"
         android:layout_width="match_parent"
