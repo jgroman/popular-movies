@@ -16,8 +16,10 @@
 
 package cz.jtek.popularmovies;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.SpannableString;
@@ -26,8 +28,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import com.squareup.picasso.Picasso;
 
@@ -42,18 +46,26 @@ public class MovieDetailFragment extends Fragment {
     private static final String TAG = MovieDetailFragment.class.getSimpleName();
 
     private Context mContext;
+    ToggleButton mFavoriteToggle;
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater,
+    public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
         super.onCreateView(inflater, container, savedInstanceState);
 
+        Activity activity = getActivity();
+        if (null == activity) { return null; }
+
+        // Store current context
+        mContext = getActivity().getApplicationContext();
+
         View view = inflater.inflate(R.layout.fragment_movie_detail, container, false);
 
-        mContext = getActivity().getApplicationContext();
+        mFavoriteToggle  = view.findViewById(R.id.tb_favorite);
+        mFavoriteToggle.setOnCheckedChangeListener(onFavoriteToggleClick);
 
         Bundle args = getArguments();
 
@@ -115,4 +127,21 @@ public class MovieDetailFragment extends Fragment {
 
         return(view);
     }
+
+    /**
+     * Favorite toggle button change listener
+     */
+    CompoundButton.OnCheckedChangeListener onFavoriteToggleClick =
+            new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                    if (isChecked) {
+                        // The toggle is enabled
+                        Log.d(TAG, "onCheckedChanged: enabled");
+                    } else {
+                        // The toggle is disabled
+                        Log.d(TAG, "onCheckedChanged: disabled");
+                    }
+                }
+            };
 }

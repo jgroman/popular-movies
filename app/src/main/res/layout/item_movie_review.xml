@@ -20,19 +20,22 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
+    android:orientation="vertical"
+    android:padding="8dp"
     >
 
     <TextView
-        android:id="@+id/tv_video_item_name"
-        android:layout_width="0dp"
+        android:id="@+id/tv_review_item_author"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:drawableLeft="@drawable/ic_play_arrow_black_24dp"
-        android:drawableStart="@drawable/ic_play_arrow_black_24dp"
-        android:drawablePadding="8dp"
+        />
+
+    <TextView
+        android:id="@+id/tv_review_item_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginStart="8dp"
         />
 
 </LinearLayout>

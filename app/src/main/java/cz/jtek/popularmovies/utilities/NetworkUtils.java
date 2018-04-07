@@ -16,7 +16,11 @@
 
 package cz.jtek.popularmovies.utilities;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -28,6 +32,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.Scanner;
 
 import cz.jtek.popularmovies.BuildConfig;
@@ -234,5 +239,30 @@ public final class NetworkUtils {
 
         public boolean hasException() { return exception != null; }
         public boolean hasResult() { return result != null; }
+    }
+
+    /**
+     * Intent to open YouTube video
+     * Tries to use YoutTube app, if it fails, it uses web browser
+     *
+     * @param context
+     * @param videoKey
+     */
+    public static void openYoutubeIntent(Context context, String videoKey) {
+        Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + videoKey));
+        Intent webIntent = new Intent(Intent.ACTION_VIEW,
+                Uri.parse("http://www.youtube.com/watch?v=" + videoKey));
+
+        try {
+            context.startActivity(appIntent);
+        } catch (ActivityNotFoundException ex) {
+            // Verify there's at least a web browser to receive the intent
+            PackageManager packageManager = context.getPackageManager();
+            List<ResolveInfo> activities = packageManager.queryIntentActivities(webIntent,0);
+            boolean isIntentSafe = activities.size() > 0;
+            if (isIntentSafe) {
+                context.startActivity(webIntent);
+            }
+        }
     }
 }

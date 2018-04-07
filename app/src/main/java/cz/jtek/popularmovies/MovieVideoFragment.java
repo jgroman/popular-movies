@@ -23,7 +23,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
@@ -31,8 +30,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -43,16 +42,17 @@ import java.util.List;
 
 import cz.jtek.popularmovies.utilities.MockDataUtils;
 import cz.jtek.popularmovies.utilities.NetworkUtils;
+import cz.jtek.popularmovies.utilities.NetworkUtils.AsyncTaskResult;
 import cz.jtek.popularmovies.utilities.TmdbJsonUtils;
 import cz.jtek.popularmovies.utilities.UIUtils;
 
 public class MovieVideoFragment extends Fragment
-    implements LoaderManager.LoaderCallbacks<MovieVideoFragment.AsyncTaskResult<List<TmdbData.Video>>> {
-
+    implements LoaderManager.LoaderCallbacks<AsyncTaskResult<List<TmdbData.Video>>>,
+    AdapterView.OnItemClickListener
+{
     private static final String TAG = MovieVideoFragment.class.getSimpleName();
 
     private Context mContext;
-    OnVideoSelectedListener mCallback;
 
     List<TmdbData.Video> mVideoList;
     VideoListItemAdapter mVideoListItemAdapter;
@@ -64,96 +64,93 @@ public class MovieVideoFragment extends Fragment
     private int mViewWidth;
 
     // AsyncLoader
-    private static final int VIDEOLIST_LOADER_ID = 1;
+    private static final int LOADER_ID_VIDEO_LIST = 2;
     private static final String LOADER_BUNDLE_MOVIE_ID = "movie-id";
-
-    public interface OnVideoSelectedListener {
-        void onVideoSelected(int position);
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-
-        // This makes sure that the container activity has implemented the callback interface
-        try {
-            mCallback = (OnVideoSelectedListener) context;
-        } catch (ClassCastException cce) {
-            throw new ClassCastException(context.toString()
-                    + " must implement OnVideoSelectedListener");
-        }
-    }
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater,
+    public View onCreateView(@NonNull  LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
 
         Activity activity = getActivity();
 
-        if (null == activity) {
-            return null;
-        }
+        if (null == activity) { return null; }
 
+        // Store current context
         mContext = activity.getApplicationContext();
 
         View view = inflater.inflate(R.layout.fragment_movie_video, container, false);
 
+        // Obtain view width for list height calculation
         mViewWidth = UIUtils.getDisplayWidth(mContext);
 
-        // Video listview
+        // Video ListView
         mVideoList = new ArrayList<>();
         mVideoListItemAdapter = new VideoListItemAdapter(mContext, R.layout.item_movie_video, mVideoList);
         mVideoListView = view.findViewById(R.id.lv_detail_videos);
         mVideoListView.setAdapter(mVideoListItemAdapter);
+        mVideoListView.setOnItemClickListener(this);
         UIUtils.showListViewFullHeight(mVideoListView, mViewWidth);
 
         mErrorMessage = view.findViewById(R.id.tv_video_error_message);
         mLoadingIndicator = view.findViewById(R.id.pb_video_loading);
 
-        Bundle args = getArguments();
         int movieId = 0;
+        Bundle args = getArguments();
 
         if (args != null) {
             if (args.containsKey(MovieDetailActivity.BUNDLE_MOVIE_ID)) {
+                // Obtain movie ID from fragment arguments
                 movieId = args.getInt(MovieDetailActivity.BUNDLE_MOVIE_ID);
             }
         }
 
         // Check for network availability
-        if (!NetworkUtils.isNetworkAvailable(mContext)) {
-            // Network is not available
-            showErrorMessage(getResources().getString(R.string.error_msg_no_network));
-        } else {
-            // Loader initialization
-            LoaderManager.LoaderCallbacks<MovieVideoFragment.AsyncTaskResult<List<TmdbData.Video>>> loaderCallbacks = this;
+        if (NetworkUtils.isNetworkAvailable(mContext)) {
             // Store movie id into loader args bundle
             Bundle loaderArgsBundle = new Bundle();
             loaderArgsBundle.putInt(LOADER_BUNDLE_MOVIE_ID, movieId);
-            // Prepare loader to be started
-            getLoaderManager().initLoader(VIDEOLIST_LOADER_ID, loaderArgsBundle, loaderCallbacks);
+            // Loader initialization
+            getLoaderManager().initLoader(LOADER_ID_VIDEO_LIST, loaderArgsBundle, MovieVideoFragment.this);
+        } else {
+            // Network is not available
+            showErrorMessage(getResources().getString(R.string.error_msg_no_network));
         }
 
         return(view);
     }
 
-    //@Override
-    public void onListItemClick(ListView l, View v, int position, long id) {
-        mCallback.onVideoSelected(position);
+    /**
+     * Video list item click listener
+     *
+     * @param adapterView   AdapterView where the click happened
+     * @param view             Clicked view
+     * @param position        Position of the view in the adapter
+     * @param id                Row id of the clicked item
+     */
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+        TmdbData.Video video =  mVideoListItemAdapter.getItem(position);
+
+        if (video != null && video.getSite().equals("YouTube")) {
+            // NetworkUtils.openYoutubeIntent(mContext, video.getKey());
+        }
     }
 
+    @NonNull
     @Override
     public Loader<AsyncTaskResult<List<TmdbData.Video>>> onCreateLoader(int id, Bundle args) {
+        // Show loading indicator
         mLoadingIndicator.setVisibility(View.VISIBLE);
         return new TmdbMovieVideoLoader(mContext, args);
     }
 
     @Override
-    public void onLoadFinished(Loader<AsyncTaskResult<List<TmdbData.Video>>> loader,
+    public void onLoadFinished(@NonNull  Loader<AsyncTaskResult<List<TmdbData.Video>>> loader,
                                AsyncTaskResult<List<TmdbData.Video>> data) {
-
+        // Hide loading indicator
         mLoadingIndicator.setVisibility(View.INVISIBLE);
 
         if (data.hasException()) {
@@ -167,16 +164,16 @@ public class MovieVideoFragment extends Fragment
             }
         } else {
             // Valid results received
-            mVideoListItemAdapter.addAll(data.getResult());
+            mVideoList = data.getResult();
+            mVideoListItemAdapter.addAll(mVideoList);
             mVideoListItemAdapter.notifyDataSetChanged();
             UIUtils.showListViewFullHeight(mVideoListView, mViewWidth);
             showMovieVideosView();
         }
-
     }
 
     @Override
-    public void onLoaderReset(Loader<AsyncTaskResult<List<TmdbData.Video>>> loader) {
+    public void onLoaderReset(@NonNull  Loader<AsyncTaskResult<List<TmdbData.Video>>> loader) {
         // Not used
     }
 
@@ -204,6 +201,7 @@ public class MovieVideoFragment extends Fragment
             mErrorMessage.setText(errorMessage);
         }
     }
+
 
     /**
      * Custom ArrayAdapter for video list
@@ -238,34 +236,9 @@ public class MovieVideoFragment extends Fragment
         }
     }
 
-    // AsyncTaskLoader result wrapper
-    // Allows returning either result or exception
-    public static class AsyncTaskResult<T> {
-        private final T result;
-        private final Exception exception;
-
-        public AsyncTaskResult(T result, Exception exception) {
-            this.result = result;
-            this.exception = exception;
-        }
-
-        public T getResult() {
-            return result;
-        }
-
-        public boolean hasResult() {
-            return result != null;
-        }
-
-        public Exception getException() {
-            return exception;
-        }
-
-        public boolean hasException() {
-            return exception != null;
-        }
-    }
-
+    /**
+     * Video list AsyncTaskLoader implementation
+     */
     public static class TmdbMovieVideoLoader
             extends AsyncTaskLoader<AsyncTaskResult<List<TmdbData.Video>>> {
 
@@ -285,15 +258,13 @@ public class MovieVideoFragment extends Fragment
                 // If there are already data available, deliver them
                 deliverResult(mResult);
             } else {
-                // Start background task
+                // Start background loader
                 forceLoad();
             }
         }
 
         @Override
-        protected void onStopLoading() {
-            cancelLoad();
-        }
+        protected void onStopLoading() { cancelLoad(); }
 
         @Override
         public AsyncTaskResult<List<TmdbData.Video>> loadInBackground() {
@@ -308,18 +279,17 @@ public class MovieVideoFragment extends Fragment
                 // Example mock request used for debugging to avoid sending network queries
                 String jsonMovieVideos = MockDataUtils.getMockJson(getContext(), "mock_videos");
 
+                // Use only videos of type "Trailer"
                 TmdbJsonUtils.TmdbJsonResult<List<TmdbData.Video>> videoResult =
                         TmdbJsonUtils.getVideoListFromJson(jsonMovieVideos, TmdbData.Video.TYPE_TRAILER);
 
                 mResult = new AsyncTaskResult<>(videoResult.getResult(), videoResult.getException());
-                return mResult;
-
             } catch (IOException iex) {
                 Log.e(TAG, "IOException when fetching API data.");
                 iex.printStackTrace();
                 mResult = new AsyncTaskResult<>(null, iex);
-                return mResult;
             }
+            return mResult;
         }
     }
 }

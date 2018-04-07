@@ -16,23 +16,9 @@
      limitations under the License.
 -->
 
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    >
-
-    <TextView
-        android:id="@+id/tv_video_item_name"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:drawableLeft="@drawable/ic_play_arrow_black_24dp"
-        android:drawableStart="@drawable/ic_play_arrow_black_24dp"
-        android:drawablePadding="8dp"
-        />
-
-</LinearLayout>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/ic_star_black_24dp"
+        android:state_checked="true" />
+    <item android:drawable="@drawable/ic_star_border_black_24dp"
+        android:state_checked="false"/>
+</selector>

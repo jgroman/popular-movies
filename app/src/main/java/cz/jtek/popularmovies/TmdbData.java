@@ -25,39 +25,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class TmdbData {
 
     private static final String TAG = TmdbData.class.getSimpleName();
 
-    // API Configuration
-    private static final String DEFAULT_IMAGE_SIZE = "w185";
-    private static final int DEFAULT_MOVIE_POSTER_WIDTH = 185;
-    private static final int DEFAULT_MOVIE_POSTER_HEIGHT = 278;
-
-    final private Config mConfig;
-    final private List<Movie> mMovieList;
-    final private Status mStatus;
-
-    TmdbData() {
-        mStatus = new Status();
-        mConfig = new Config();
-        mMovieList = new ArrayList<>();
-    }
-
-    public TmdbData.Status getStatus() {
-        return mStatus;
-    }
-
-    public TmdbData.Config getConfig() {
-        return mConfig;
-    }
-
-    public List<Movie> getMovieList() {
-        return mMovieList;
-    }
-
+    /**
+     *
+     */
     public static class TmdbStatusException extends Exception {
         public TmdbStatusException(String message) {
             super(message);
@@ -78,34 +53,18 @@ public class TmdbData {
         static final String CODE = "status_code";
         static final String MSG = "status_message";
 
-        // private boolean mDataValid;
-        private int mCode;
-        private String mMessage;
+        int mCode;
+        String mMessage;
 
-        Status() {
-            // mDataValid = true;
-        }
-
-        /*
-        public void setDataValid(boolean valid) {
-            mDataValid = valid;
-        }
-        boolean getDataValid() {
-            return mDataValid;
-        }
-        */
+        Status() {}
 
         // Code
         public void setCode(int code) { mCode = code; }
         public int getCode() { return mCode; }
 
         // Message
-        public void setMessage(String message) {
-            mMessage = message;
-        }
-        public String getMessage() {
-            return mMessage;
-        }
+        public void setMessage(String msg) { mMessage = msg; }
+        public String getMessage() { return mMessage; }
 
         // Constructor converting JSON object to object instance
         public static Status fromJson(JSONObject jsonObject)
@@ -125,8 +84,10 @@ public class TmdbData {
 
         /**
          * Check whether status code is present in JSON object
+         * It would mean that API request failed
          *
-         * @param jsonObject
+         * @param jsonObject JSON object to check
+         *
          * @return true if status code is present
          */
         public static boolean isPresent(JSONObject jsonObject) {
@@ -139,10 +100,16 @@ public class TmdbData {
      */
     public static class Config implements Parcelable {
         // API Configuration
+        // https://developers.themoviedb.org/3/configuration/get-api-configuration
         static final String IMAGES = "images";
         static final String SECURE_BASE_URL = "secure_base_url";
 
-        private String mSecureBaseUrl;
+        // These values are currently hardcoded
+        static final String DEFAULT_IMAGE_SIZE = "w185";
+        static final int DEFAULT_MOVIE_POSTER_WIDTH = 185;
+        static final int DEFAULT_MOVIE_POSTER_HEIGHT = 278;
+
+        String mSecureBaseUrl;
 
         static String getPosterSize() { return DEFAULT_IMAGE_SIZE; }
 
@@ -197,6 +164,9 @@ public class TmdbData {
         };
     }
 
+    /**
+     *
+     */
     public static class Movie implements Parcelable {
         // API Movie
         // https://developers.themoviedb.org/3/movies/get-popular-movies
@@ -209,21 +179,21 @@ public class TmdbData {
         static final String VOTE_AVERAGE = "vote_average";
         static final String OVERVIEW = "overview";
 
-        /* Movie API properties */
-        // private int mVoteCount;
-        private int mId;
-        // private boolean mVideo;
-        private double mVoteAverage;
-        private String mTitle;
-        // private double mPopularity;
-        private String mPosterPath;
-        // private String mOriginalLanguage;
-        // private String mOriginalTitle;
-        // private int[] mGenreIds;
-        // private String mBackdropPath;
-        // private boolean mAdult;
-        private String mOverview;
-        private String mReleaseDate;
+        // Movie API properties
+        // int mVoteCount;
+        int mId;
+        // boolean mVideo;
+        double mVoteAverage;
+        String mTitle;
+        // double mPopularity;
+        String mPosterPath;
+        // String mOriginalLanguage;
+        // String mOriginalTitle;
+        // int[] mGenreIds;
+        // String mBackdropPath;
+        // boolean mAdult;
+        String mOverview;
+        String mReleaseDate;
 
         // Id
         public int getId() { return mId; }
@@ -337,6 +307,9 @@ public class TmdbData {
 
     }
 
+    /**
+     *
+     */
     public static class Video {
         // API Movie Videos
         // https://developers.themoviedb.org/3/movies/get-movie-videos
@@ -353,11 +326,11 @@ public class TmdbData {
         static final String TYPE_CLIP = "Clip";
         static final String TYPE_FEATURETTE = "Featurette";
 
-        private String mId;
-        private String mName;
-        private String mKey;
-        private String mSite;
-        private String mType;
+        String mId;
+        String mName;
+        String mKey;
+        String mSite;
+        String mType;
 
         // Id
         public String getId() { return mId; }
@@ -380,8 +353,7 @@ public class TmdbData {
         public void setType(String type) { mType = type; }
 
         // Constructor converting JSON object to object instance
-        public static Video fromJson(JSONObject jsonObject)
-                throws JSONException {
+        static Video fromJson(JSONObject jsonObject) throws JSONException {
             Video v = new Video();
 
             if (jsonObject.has(VIDEO_ID)) {
@@ -428,6 +400,9 @@ public class TmdbData {
 
     }
 
+    /**
+     *
+     */
     public static class Review {
         // API Movie Reviews
         // https://developers.themoviedb.org/3/movies/get-movie-reviews
@@ -438,10 +413,10 @@ public class TmdbData {
         static final String CONTENT = "content";
         static final String URL = "url";
 
-        private String mId;
-        private String mAuthor;
-        private String mContent;
-        private String mUrl;
+        String mId;
+        String mAuthor;
+        String mContent;
+        String mUrl;
 
         // Id
         public String getId() { return mId; }

@@ -21,8 +21,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
-public class MovieDetailActivity extends AppCompatActivity
-    implements MovieVideoFragment.OnVideoSelectedListener {
+public class MovieDetailActivity extends AppCompatActivity {
 
     private static final String TAG = MovieDetailActivity.class.getSimpleName();
 
@@ -76,8 +75,4 @@ public class MovieDetailActivity extends AppCompatActivity
 
     }
 
-    @Override
-    public void onVideoSelected(int position) {
-
-    }
 }
