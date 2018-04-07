@@ -49,7 +49,8 @@
     <TextView
         android:id="@+id/tv_video_error_message"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_video_header"
         android:text="@string/error_message"
         android:visibility="invisible"
         android:gravity="center"
@@ -62,6 +63,7 @@
         android:id="@+id/pb_video_loading"
         android:layout_width="42dp"
         android:layout_height="42dp"
+        android:layout_below="@id/tv_video_header"
         android:layout_gravity="center"
         android:indeterminate="true"
         android:visibility="invisible"

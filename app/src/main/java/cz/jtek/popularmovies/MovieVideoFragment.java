@@ -264,7 +264,6 @@ public class MovieVideoFragment extends Fragment
         public boolean hasException() {
             return exception != null;
         }
-
     }
 
     public static class TmdbMovieVideoLoader
@@ -310,7 +309,7 @@ public class MovieVideoFragment extends Fragment
                 String jsonMovieVideos = MockDataUtils.getMockJson(getContext(), "mock_videos");
 
                 TmdbJsonUtils.TmdbJsonResult<List<TmdbData.Video>> videoResult =
-                        TmdbJsonUtils.getVideoListFromJson(jsonMovieVideos);
+                        TmdbJsonUtils.getVideoListFromJson(jsonMovieVideos, TmdbData.Video.TYPE_TRAILER);
 
                 mResult = new AsyncTaskResult<>(videoResult.getResult(), videoResult.getException());
                 return mResult;

@@ -34,153 +34,104 @@ public class TmdbJsonUtils {
 
     private static final String TAG = TmdbJsonUtils.class.getSimpleName();
 
-    // JSON result wrapper
-    // Allows returning either result or exception
+    /**
+     * JSON result wrapper
+     * Allows returning either result or exception
+     *
+     * @param <T> Result type
+     */
     public static class TmdbJsonResult<T> {
         private final T result;
         private final Exception exception;
 
-        public TmdbJsonResult(T result, Exception exception) {
+        TmdbJsonResult(T result, Exception exception) {
             this.result = result;
             this.exception = exception;
         }
 
-        public T getResult() {
-            return result;
-        }
+        public T getResult() { return result; }
 
-        public Exception getException() {
-            return exception;
-        }
+        public Exception getException() { return exception; }
 
-        public boolean hasException() {
-            return exception != null;
-        }
+        // Checks whether instance contains an exception
+        public boolean hasException() { return exception != null; }
     }
 
     /**
-     * Parses TMDb API /configuration reply and updates tmdbData Config values
+     * Parses TMDb API /configuration reply
      *
-     * @param tmdbData                  tmdbData instance
      * @param tmdbConfigJsonString  API JSON response string
      */
-    public static void getConfigFromJson(TmdbData tmdbData, String tmdbConfigJsonString) {
+    public static  TmdbJsonResult<TmdbData.Config> getConfigFromJson(String tmdbConfigJsonString) {
 
-        boolean isJsonValidApiConfig = false;
-
-        tmdbData.getStatus().setDataValid(true);
+        TmdbData.Config config = null;
 
         try {
-            JSONObject tmdbConfigJson = new JSONObject(tmdbConfigJsonString);
+            JSONObject configJson = new JSONObject(tmdbConfigJsonString);
 
             // Check whether TMDb API reports an error
-            if (tmdbConfigJson.has(TmdbData.Status.CODE)) {
-                tmdbData.getStatus().setDataValid(false);
-                int statusCode = tmdbConfigJson.getInt(TmdbData.Status.CODE);
+            if (TmdbData.Status.isPresent(configJson)) {
+                TmdbData.Status status = TmdbData.Status.fromJson(configJson);
 
-                String statusMsg = "";
-                if (tmdbConfigJson.has(TmdbData.Status.MSG)) {
-                    statusMsg = tmdbConfigJson.getString(TmdbData.Status.MSG);
-                    tmdbData.getStatus().setStatusMessage(statusMsg);
-                }
-                Log.e(TAG, "TMDb status: " + statusCode + " - " + statusMsg);
-                return;
+                Log.e(TAG, "TMDb status: " + status.getCode() + " (" + status.getMessage() + ")");
+                return new TmdbJsonResult<>(null,
+                        new TmdbData.TmdbStatusException(status.getCode(), status.getMessage()));
             }
 
-            // Currently we are only interested in "secure base URL" string from "images" object
-            if (tmdbConfigJson.has(TmdbData.Config.IMAGES)) {
-                JSONObject images = tmdbConfigJson.getJSONObject(TmdbData.Config.IMAGES);
-
-                if (images.has(TmdbData.Config.SECURE_BASE_URL)) {
-
-                    // Update Config secureBaseUrl value
-                    tmdbData.getConfig().setSecureBaseUrl(images.getString(TmdbData.Config.SECURE_BASE_URL));
-                    isJsonValidApiConfig = true;
-                }
-            }
-
-            if (!isJsonValidApiConfig) {
-                // We didn't find all required JSON objects
-                Log.e(TAG, "Invalid TMDb API configuration data.");
-            }
+            config = TmdbData.Config.fromJson(configJson);
 
         } catch (JSONException ex) {
-            Log.e(TAG, "JSONException parsing API configuration reply.");
-            ex.printStackTrace();
+            Log.e(TAG, "JSONException parsing API configuration reply");
+            return new TmdbJsonResult<>(null, ex);
         }
+
+        return new TmdbJsonResult<>(config, null);
     }
 
-    public static List<TmdbData.Movie> getMovieListFromJson(TmdbData tmdbData, String tmdbMovieJsonString) {
+    /**
+     *
+     * @param tmdbMovieJsonString
+     * @return
+     */
+    public static TmdbJsonResult<List<TmdbData.Movie>> getMovieListFromJson(String tmdbMovieJsonString) {
 
-        List<TmdbData.Movie> moviesList = tmdbData.getMovieList();
+        List<TmdbData.Movie> moviesList = new ArrayList<>();
 
         try {
             JSONObject movieJson = new JSONObject(tmdbMovieJsonString);
 
             // Check whether TMDb API reports an error
-            if (movieJson.has(TmdbData.Status.CODE)) {
-                int statusCode = movieJson.getInt(TmdbData.Status.CODE);
-                String statusMsg = "";
-                if (movieJson.has(TmdbData.Status.MSG)) {
-                    statusMsg = movieJson.getString(TmdbData.Status.MSG);
-                }
-                Log.e(TAG, "TMDb status: " + statusCode + " - " + statusMsg);
-                return null;
+            if (TmdbData.Status.isPresent(movieJson)) {
+                TmdbData.Status status = TmdbData.Status.fromJson(movieJson);
+
+                Log.e(TAG, "TMDb status: " + status.getCode() + " (" + status.getMessage() + ")");
+                return new TmdbJsonResult<>(null,
+                        new TmdbData.TmdbStatusException(status.getCode(), status.getMessage()));
             }
 
             // Parsing returned data
             if (movieJson.has(TmdbData.Movie.RESULTS)) {
                 JSONArray results = movieJson.getJSONArray(TmdbData.Movie.RESULTS);
-                int resultCount = results.length();
-
-                for (int i=0; i<resultCount; i++) {
-                    JSONObject movieObj = results.getJSONObject(i);
-                    TmdbData.Movie movie = new TmdbData.Movie();
-
-                    if (movieObj.has(TmdbData.Movie.ID)) {
-                        movie.setId(movieObj.getInt(TmdbData.Movie.ID));
-                    }
-
-                    if (movieObj.has(TmdbData.Movie.TITLE)) {
-                        movie.setTitle(movieObj.getString(TmdbData.Movie.TITLE));
-                    }
-
-                    if (movieObj.has(TmdbData.Movie.RELEASE_DATE)) {
-                        movie.setReleaseDate(movieObj.getString(TmdbData.Movie.RELEASE_DATE));
-                    }
-
-                    if (movieObj.has(TmdbData.Movie.POSTER_PATH)) {
-                        movie.setPosterPath(movieObj.getString(TmdbData.Movie.POSTER_PATH));
-                    }
-
-                    if (movieObj.has(TmdbData.Movie.VOTE_AVERAGE)) {
-                        movie.setVoteAverage(movieObj.getDouble(TmdbData.Movie.VOTE_AVERAGE));
-                    }
-
-                    if (movieObj.has(TmdbData.Movie.OVERVIEW)) {
-                        movie.setOverview(movieObj.getString(TmdbData.Movie.OVERVIEW));
-                    }
-
-                    moviesList.add(movie);
-                }
-
+                moviesList = TmdbData.Movie.fromJson(results);
             }
 
         } catch (JSONException ex) {
-            Log.e(TAG, "JSONException parsing configuration.");
-            return null;
+            Log.e(TAG, "JSONException parsing movies.");
+            return new TmdbJsonResult<>(null, ex);
         }
 
-        return moviesList;
+        return new TmdbJsonResult<>(moviesList, null);
     }
 
     /**
-     * Parses TMDb API /movie/{movie_id}/videos reply and updates tmdbData Config values
+     * Parses TMDb API /movie/{movie_id}/videos reply
      *
      * @param tmdbJson              API JSON response string
-     * @return List of Tmdb.Video objects or exception in TmdbJsonResult object
+     * @param filterType            Return only videos of this type
+     *
+     * @return TmdbJsonResult object with either list of Tmdb.Video objects or exception
      */
-    public static TmdbJsonResult<List<TmdbData.Video>> getVideoListFromJson(String tmdbJson) {
+    public static TmdbJsonResult<List<TmdbData.Video>> getVideoListFromJson(String tmdbJson, String filterType) {
 
         List<TmdbData.Video> videoList = new ArrayList<>();
 
@@ -188,22 +139,55 @@ public class TmdbJsonUtils {
             JSONObject videoJson = new JSONObject(tmdbJson);
 
             // Check whether TMDb API reports an error
-            if (videoJson.has(TmdbData.Status.CODE)) {
-                int statusCode = videoJson.getInt(TmdbData.Status.CODE);
-                String statusMsg = "";
-                if (videoJson.has(TmdbData.Status.MSG)) {
-                    statusMsg = videoJson.getString(TmdbData.Status.MSG);
-                }
+            if (TmdbData.Status.isPresent(videoJson)) {
+                TmdbData.Status status = TmdbData.Status.fromJson(videoJson);
 
-                Log.e(TAG, "TMDb status: " + statusCode + " (" + statusMsg + ")");
+                Log.e(TAG, "TMDb status: " + status.getCode() + " (" + status.getMessage() + ")");
                 return new TmdbJsonResult<>(null,
-                        new TmdbData.TmdbStatusException(statusCode, statusMsg));
+                        new TmdbData.TmdbStatusException(status.getCode(), status.getMessage()));
             }
 
             // Parsing returned data
             if (videoJson.has(TmdbData.Video.RESULTS)) {
-                JSONArray results = videoJson.getJSONArray(TmdbData.Movie.RESULTS);
-                videoList = TmdbData.Video.fromJson(results);
+                JSONArray results = videoJson.getJSONArray(TmdbData.Video.RESULTS);
+                videoList = TmdbData.Video.fromJson(results, filterType);
+            }
+
+        } catch (JSONException ex) {
+            Log.e(TAG, "JSONException parsing movie videos.");
+            return new TmdbJsonResult<>(null, ex);
+        }
+
+        return new TmdbJsonResult<>(videoList, null);
+    }
+
+    /**
+     * Parses TMDb API /movie/{movie_id}/reviews reply
+     *
+     * @param tmdbJson              API JSON response string
+     *
+     * @return TmdbJsonResult object with either list of Tmdb.Review objects or exception
+     */
+    public static TmdbJsonResult<List<TmdbData.Review>> getReviewListFromJson(String tmdbJson) {
+
+        List<TmdbData.Review> reviewList = new ArrayList<>();
+
+        try {
+            JSONObject reviewJson = new JSONObject(tmdbJson);
+
+            // Check whether TMDb API reports an error
+            if (TmdbData.Status.isPresent(reviewJson)) {
+                TmdbData.Status status = TmdbData.Status.fromJson(reviewJson);
+
+                Log.e(TAG, "TMDb status: " + status.getCode() + " (" + status.getMessage() + ")");
+                return new TmdbJsonResult<>(null,
+                        new TmdbData.TmdbStatusException(status.getCode(), status.getMessage()));
+            }
+
+            // Parsing returned data
+            if (reviewJson.has(TmdbData.Review.RESULTS)) {
+                JSONArray results = reviewJson.getJSONArray(TmdbData.Review.RESULTS);
+                reviewList = TmdbData.Review.fromJson(results);
             }
 
         } catch (JSONException ex) {
@@ -211,6 +195,7 @@ public class TmdbJsonUtils {
             return new TmdbJsonResult<>(null, ex);
         }
 
-        return new TmdbJsonResult<>(videoList, null);
+        return new TmdbJsonResult<>(reviewList, null);
     }
+
 }

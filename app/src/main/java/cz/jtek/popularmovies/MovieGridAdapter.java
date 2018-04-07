@@ -144,12 +144,11 @@ public class MovieGridAdapter
      * This method is used to set the movie data on a MovieGridAdapter if we've already
      * created one.
      *
-     * @param tmdbData The new movie data to be displayed.
      */
-    void setMovieData(TmdbData tmdbData) {
-        if (tmdbData != null) {
-            mMovieList = tmdbData.getMovieList();
-            mTmdbConfig = tmdbData.getConfig();
+    void setMovieData(TmdbData.Config config, List<TmdbData.Movie> movieList) {
+        if (config != null && movieList != null) {
+            mTmdbConfig = config;
+            mMovieList = movieList;
             notifyDataSetChanged();
         }
     }

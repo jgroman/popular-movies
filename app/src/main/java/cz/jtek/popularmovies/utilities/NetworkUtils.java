@@ -214,4 +214,25 @@ public final class NetworkUtils {
         return false;
     }
 
+    /**
+     * Class for returning results from AsyncTaskLoader
+     * Result contains either result of desired type or an exception
+     *
+     * @param <T> Result type
+     */
+    public static class AsyncTaskResult<T> {
+        private final T result;
+        private final Exception exception;
+
+        public AsyncTaskResult(T result, Exception exception) {
+            this.result = result;
+            this.exception = exception;
+        }
+
+        public Exception getException() { return exception; }
+        public T getResult() { return result; }
+
+        public boolean hasException() { return exception != null; }
+        public boolean hasResult() { return result != null; }
+    }
 }

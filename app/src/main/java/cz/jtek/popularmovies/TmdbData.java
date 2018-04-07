@@ -36,7 +36,7 @@ public class TmdbData {
     private static final int DEFAULT_MOVIE_POSTER_WIDTH = 185;
     private static final int DEFAULT_MOVIE_POSTER_HEIGHT = 278;
 
-    final private TmdbData.Config mConfig;
+    final private Config mConfig;
     final private List<Movie> mMovieList;
     final private Status mStatus;
 
@@ -69,65 +69,105 @@ public class TmdbData {
 
     }
 
+    /**
+     * TMDb Status object
+     */
     public static class Status {
         // API Status
         // https://www.themoviedb.org/documentation/api/status-codes
-        public static final String CODE = "status_code";
-        public static final String MSG = "status_message";
+        static final String CODE = "status_code";
+        static final String MSG = "status_message";
 
-        private boolean mDataValid;
-        // private int mStatusCode;
-        private String mStatusMessage;
+        // private boolean mDataValid;
+        private int mCode;
+        private String mMessage;
 
         Status() {
-            mDataValid = true;
-        }
-
-        public void setDataValid(boolean valid) {
-            mDataValid = valid;
-        }
-
-        boolean getDataValid() {
-            return mDataValid;
+            // mDataValid = true;
         }
 
         /*
-        public void setStatusCode(int code) {
-            mStatusCode = code;
+        public void setDataValid(boolean valid) {
+            mDataValid = valid;
         }
-
-        public int getStatusCode() { return mStatusCode; }
+        boolean getDataValid() {
+            return mDataValid;
+        }
         */
 
-        public void setStatusMessage(String message) {
-            mStatusMessage = message;
+        // Code
+        public void setCode(int code) { mCode = code; }
+        public int getCode() { return mCode; }
+
+        // Message
+        public void setMessage(String message) {
+            mMessage = message;
+        }
+        public String getMessage() {
+            return mMessage;
         }
 
-        String getStatusMessage() {
-            return mStatusMessage;
+        // Constructor converting JSON object to object instance
+        public static Status fromJson(JSONObject jsonObject)
+                throws JSONException {
+            Status s = new Status();
+
+            if (jsonObject.has(CODE)) {
+                s.mCode = jsonObject.getInt(CODE);
+            }
+
+            if (jsonObject.has(MSG)) {
+                s.mMessage = jsonObject.getString(MSG);
+            }
+
+            return s;
+        }
+
+        /**
+         * Check whether status code is present in JSON object
+         *
+         * @param jsonObject
+         * @return true if status code is present
+         */
+        public static boolean isPresent(JSONObject jsonObject) {
+            return jsonObject.has(CODE);
         }
     }
 
+    /**
+     * TMDb Configuration object
+     */
     public static class Config implements Parcelable {
         // API Configuration
-        public static final String IMAGES = "images";
-        public static final String SECURE_BASE_URL = "secure_base_url";
+        static final String IMAGES = "images";
+        static final String SECURE_BASE_URL = "secure_base_url";
 
         private String mSecureBaseUrl;
-
-        String getSecureBaseUrl() {
-            return mSecureBaseUrl;
-        }
-        public void setSecureBaseUrl(String url) {
-            mSecureBaseUrl = url;
-        }
 
         static String getPosterSize() { return DEFAULT_IMAGE_SIZE; }
 
         static int getPosterWidth() { return DEFAULT_MOVIE_POSTER_WIDTH; }
         static int getPosterHeight() { return DEFAULT_MOVIE_POSTER_HEIGHT; }
 
-        public Config() {}
+        String getSecureBaseUrl() { return mSecureBaseUrl; }
+        public void setSecureBaseUrl(String url) { mSecureBaseUrl = url; }
+
+        Config() {}
+
+        // Constructor converting JSON object to object instance
+        public static Config fromJson(JSONObject jsonObject)
+                throws JSONException {
+            Config c = new Config();
+
+            // Currently we are only interested in "secure base URL" string from "images" object
+            if (jsonObject.has(IMAGES)) {
+                JSONObject imagesObject = jsonObject.getJSONObject(IMAGES);
+                if (imagesObject.has(SECURE_BASE_URL)) {
+                    c.mSecureBaseUrl = imagesObject.getString(SECURE_BASE_URL);
+                }
+            }
+            return c;
+        }
 
         private Config(Parcel in) {
             mSecureBaseUrl = in.readString();
@@ -162,12 +202,12 @@ public class TmdbData {
         // https://developers.themoviedb.org/3/movies/get-popular-movies
         // https://developers.themoviedb.org/3/movies/get-top-rated-movies
         public static final String RESULTS = "results";
-        public static final String ID = "id";
-        public static final String TITLE = "title";
-        public static final String RELEASE_DATE = "release_date";
-        public static final String POSTER_PATH = "poster_path";
-        public static final String VOTE_AVERAGE = "vote_average";
-        public static final String OVERVIEW = "overview";
+        static final String MOVIE_ID = "id";
+        static final String TITLE = "title";
+        static final String RELEASE_DATE = "release_date";
+        static final String POSTER_PATH = "poster_path";
+        static final String VOTE_AVERAGE = "vote_average";
+        static final String OVERVIEW = "overview";
 
         /* Movie API properties */
         // private int mVoteCount;
@@ -209,13 +249,54 @@ public class TmdbData {
         String getOverview() { return mOverview; }
         public void setOverview(String overview) { mOverview = overview; }
 
-        @Override
-        public int describeContents() {
-            // No file descriptors in class members
-            return 0;
+        public Movie() { }
+
+        // Constructor converting JSON object to object instance
+        static Movie fromJson(JSONObject jsonObject)
+                throws JSONException {
+            Movie m = new Movie();
+
+            if (jsonObject.has(MOVIE_ID)) {
+                m.mId = jsonObject.getInt(TmdbData.Movie.MOVIE_ID);
+            }
+
+            if (jsonObject.has(TITLE)) {
+                m.mTitle = jsonObject.getString(TmdbData.Movie.TITLE);
+            }
+
+            if (jsonObject.has(RELEASE_DATE)) {
+                m.mReleaseDate = jsonObject.getString(RELEASE_DATE);
+            }
+
+            if (jsonObject.has(POSTER_PATH)) {
+                m.mPosterPath = jsonObject.getString(POSTER_PATH);
+            }
+
+            if (jsonObject.has(VOTE_AVERAGE)) {
+                m.mVoteAverage = jsonObject.getDouble(VOTE_AVERAGE);
+            }
+
+            if (jsonObject.has(OVERVIEW)) {
+                m.mOverview = jsonObject.getString(OVERVIEW);
+            }
+
+            return m;
         }
 
-        public Movie() { }
+        // Factory method for converting JSON object array to list of object instances
+        public static ArrayList<Movie> fromJson(JSONArray jsonArray)
+                throws JSONException {
+            JSONObject movieJson;
+
+            int objectCount = jsonArray.length();
+            ArrayList<Movie> movies = new ArrayList<>(objectCount);
+            for (int i = 0; i < objectCount; i++) {
+                movieJson = jsonArray.getJSONObject(i);
+                Movie m = Movie.fromJson(movieJson);
+                if (m != null) { movies.add(m); }
+            }
+            return movies;
+        }
 
         private Movie(Parcel in) {
             mId = in.readInt();
@@ -236,6 +317,12 @@ public class TmdbData {
             parcel.writeDouble(mVoteAverage);
         }
 
+        @Override
+        public int describeContents() {
+            // No file descriptors in class members
+            return 0;
+        }
+
         static final Parcelable.Creator<Movie> CREATOR
                 = new Parcelable.Creator<Movie>() {
 
@@ -254,11 +341,17 @@ public class TmdbData {
         // API Movie Videos
         // https://developers.themoviedb.org/3/movies/get-movie-videos
         public static final String RESULTS = "results";
-        static final String ID = "id";
+        static final String VIDEO_ID = "id";
         static final String KEY = "key";
         static final String NAME = "name";
         static final String SITE = "site";
         static final String TYPE = "type";
+
+        // Available Video types
+        static final String TYPE_TRAILER = "Trailer";
+        static final String TYPE_TEASER = "Teaser";
+        static final String TYPE_CLIP = "Clip";
+        static final String TYPE_FEATURETTE = "Featurette";
 
         private String mId;
         private String mName;
@@ -291,8 +384,8 @@ public class TmdbData {
                 throws JSONException {
             Video v = new Video();
 
-            if (jsonObject.has(ID)) {
-                v.mId = jsonObject.getString(ID);
+            if (jsonObject.has(VIDEO_ID)) {
+                v.mId = jsonObject.getString(VIDEO_ID);
             }
 
             if (jsonObject.has(NAME)) {
@@ -315,7 +408,7 @@ public class TmdbData {
         }
 
         // Factory method for converting JSON object array to list of object instances
-        public static ArrayList<Video> fromJson(JSONArray jsonArray)
+        public static ArrayList<Video> fromJson(JSONArray jsonArray, String filterType)
                 throws JSONException {
             JSONObject videoJson;
 
@@ -324,7 +417,11 @@ public class TmdbData {
             for (int i = 0; i < objectCount; i++) {
                 videoJson = jsonArray.getJSONObject(i);
                 Video video = Video.fromJson(videoJson);
-                if (video != null) { videos.add(video); }
+                if (video != null) {
+                    if (filterType == null || video.mType.equals(filterType)) {
+                        videos.add(video);
+                    }
+                }
             }
             return videos;
         }
@@ -334,10 +431,12 @@ public class TmdbData {
     public static class Review {
         // API Movie Reviews
         // https://developers.themoviedb.org/3/movies/get-movie-reviews
-        public static final String ID = "id";
-        public static final String AUTHOR = "author";
-        public static final String CONTENT = "content";
-        public static final String URL = "url";
+        public static final String RESULTS = "results";
+
+        static final String REVIEW_ID = "id";
+        static final String AUTHOR = "author";
+        static final String CONTENT = "content";
+        static final String URL = "url";
 
         private String mId;
         private String mAuthor;
@@ -359,6 +458,45 @@ public class TmdbData {
         // URL
         public String getUrl() { return mUrl; }
         public void setUrl(String url) { mUrl = url; }
+
+        // Constructor converting JSON object to object instance
+        static Review fromJson(JSONObject jsonObject)
+                throws JSONException {
+            Review r = new Review();
+
+            if (jsonObject.has(REVIEW_ID)) {
+                r.mId = jsonObject.getString(REVIEW_ID);
+            }
+
+            if (jsonObject.has(AUTHOR)) {
+                r.mAuthor = jsonObject.getString(AUTHOR);
+            }
+
+            if (jsonObject.has(CONTENT)) {
+                r.mContent = jsonObject.getString(CONTENT);
+            }
+
+            if (jsonObject.has(URL)) {
+                r.mUrl = jsonObject.getString(URL);
+            }
+
+            return r;
+        }
+
+        // Factory method for converting JSON object array to list of object instances
+        public static ArrayList<Review> fromJson(JSONArray jsonArray)
+                throws JSONException {
+            JSONObject reviewJson;
+
+            int objectCount = jsonArray.length();
+            ArrayList<Review> reviews = new ArrayList<>(objectCount);
+            for (int i = 0; i < objectCount; i++) {
+                reviewJson = jsonArray.getJSONObject(i);
+                Review review = Review.fromJson(reviewJson);
+                if (review != null) { reviews.add(review); }
+            }
+            return reviews;
+        }
 
     }
 }
