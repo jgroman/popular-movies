@@ -22,16 +22,18 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import cz.jtek.popularmovies.data.MovieContract.MovieEntry;
 
+import static cz.jtek.popularmovies.data.MovieContract.MovieEntry.TABLE_NAME;
+
 public class MovieDbHelper extends SQLiteOpenHelper {
 
     // Database file name
-    public static final String DB_NAME = "movie.db";
+    private static final String DB_NAME = "movie.db";
 
     // This db version should be updated on every db schema change to trigger
     // onUpgrade method to run
     private static final int DB_VERSION = 1;
 
-    public MovieDbHelper(Context context) {
+    MovieDbHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
     }
 
@@ -44,7 +46,7 @@ public class MovieDbHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
 
         final String SQL_CREATE_MOVIE_TABLE =
-                "CREATE TABLE " + MovieEntry.TABLE_NAME + " (" +
+                "CREATE TABLE " + TABLE_NAME + " (" +
                 MovieEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 MovieEntry.COL_MOVIE_ID + " INTEGER NOT NULL, " +
                 MovieEntry.COL_TITLE + " TEXT NOT NULL, " +
@@ -60,7 +62,11 @@ public class MovieDbHelper extends SQLiteOpenHelper {
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // Warning: this drops old table on upgrade
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        onCreate(db);
     }
+
+
 }

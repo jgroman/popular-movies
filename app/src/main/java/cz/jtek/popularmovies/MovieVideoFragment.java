@@ -37,6 +37,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,7 +65,7 @@ public class MovieVideoFragment extends Fragment
     private int mViewWidth;
 
     // AsyncLoader
-    private static final int LOADER_ID_VIDEO_LIST = 2;
+    private static final int LOADER_ID_VIDEO_LIST = 22;
     private static final String LOADER_BUNDLE_MOVIE_ID = "movie-id";
 
     @Nullable
@@ -135,7 +136,7 @@ public class MovieVideoFragment extends Fragment
         TmdbData.Video video =  mVideoListItemAdapter.getItem(position);
 
         if (video != null && video.getSite().equals("YouTube")) {
-            // NetworkUtils.openYoutubeIntent(mContext, video.getKey());
+            NetworkUtils.openYoutubeIntent(mContext, video.getKey());
         }
     }
 
@@ -170,6 +171,9 @@ public class MovieVideoFragment extends Fragment
             UIUtils.showListViewFullHeight(mVideoListView, mViewWidth);
             showMovieVideosView();
         }
+
+        // Destroy this loader (otherwise is gets called twice for some reason)
+        getLoaderManager().destroyLoader(LOADER_ID_VIDEO_LIST);
     }
 
     @Override
@@ -273,11 +277,11 @@ public class MovieVideoFragment extends Fragment
 
             try {
                 // Load movie video list
-                //URL movieVideosUrl = NetworkUtils.buildMovieVideosUrl(movieId);
-                //String jsonMovieVideos = NetworkUtils.getResponseFromHttpUrl(movieVideosUrl);
+                URL movieVideosUrl = NetworkUtils.buildMovieVideosUrl(movieId);
+                String jsonMovieVideos = NetworkUtils.getResponseFromHttpUrl(movieVideosUrl);
 
                 // Example mock request used for debugging to avoid sending network queries
-                String jsonMovieVideos = MockDataUtils.getMockJson(getContext(), "mock_videos");
+                // String jsonMovieVideos = MockDataUtils.getMockJson(getContext(), "mock_videos");
 
                 // Use only videos of type "Trailer"
                 TmdbJsonUtils.TmdbJsonResult<List<TmdbData.Video>> videoResult =

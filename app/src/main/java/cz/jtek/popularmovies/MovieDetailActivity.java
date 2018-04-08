@@ -57,17 +57,17 @@ public class MovieDetailActivity extends AppCompatActivity {
                 Bundle fragmentBundle = new Bundle();
                 fragmentBundle.putInt(BUNDLE_MOVIE_ID, movieId);
 
-                MovieVideoFragment video = new MovieVideoFragment();
-                video.setArguments(fragmentBundle);
+                MovieVideoFragment videos = new MovieVideoFragment();
+                videos.setArguments(fragmentBundle);
 
-                MovieReviewFragment review = new MovieReviewFragment();
-                video.setArguments(fragmentBundle);
+                MovieReviewFragment reviews = new MovieReviewFragment();
+                reviews.setArguments(fragmentBundle);
 
                 // Add fragments to detail fragment container
                 getSupportFragmentManager().beginTransaction()
                         .add(R.id.detail_container, detail)
-                        .add(R.id.detail_container, video)
-                        .add(R.id.detail_container, review)
+                        .add(R.id.detail_container, videos)
+                        .add(R.id.detail_container, reviews)
                         .commit();
             }
         }

@@ -60,6 +60,8 @@ public final class NetworkUtils {
     private static final String API_PATH_MOVIE = "movie";
     private static final String API_PATH_POPULAR = "popular";
     private static final String API_PATH_TOP_RATED = "top_rated";
+    private static final String API_PATH_VIDEOS = "videos";
+    private static final String API_PATH_REVIEWS = "reviews";
 
     private static final String API_PARAM_API_KEY = "api_key";
     private static final String API_PARAM_PAGE = "page";
@@ -142,9 +144,7 @@ public final class NetworkUtils {
         Uri tmdbMovieUri = uriBuilder.build();
 
         try {
-            URL tmdbMovieUrl = new URL(tmdbMovieUri.toString());
-            Log.d(TAG, "URL movie: " + tmdbMovieUrl);
-            return tmdbMovieUrl;
+            return new URL(tmdbMovieUri.toString());
         } catch (MalformedURLException e) {
             e.printStackTrace();
             return null;
@@ -152,13 +152,64 @@ public final class NetworkUtils {
     }
 
     /**
+     * Creates valid TMDb API /movie/[movieId]/videos URL for network requests
      *
-     * @param movieId
-     * @return
+     * @param movieId Movie id to use in URL
+     *
+     * @return  TMDb movie videos URL
      */
     public static URL buildMovieVideosUrl(int movieId) {
-        // TODO
-        return null;
+
+        // Build TMDb movie videos Uri
+        Uri.Builder uriBuilder = new Uri.Builder();
+        uriBuilder.scheme(API_SCHEME)
+                .authority(TMDB_API_AUTHORITY)
+                .appendPath(API_PATH_VERSION)
+                .appendPath(API_PATH_MOVIE)
+                .appendPath(String.valueOf(movieId))
+                .appendPath(API_PATH_VIDEOS);
+
+        // API token comes from grade.properties file, see README
+        uriBuilder.appendQueryParameter(API_PARAM_API_KEY, BuildConfig.TMDB_API_TOKEN);
+
+        Uri videosUri = uriBuilder.build();
+
+        try {
+            return new URL(videosUri.toString());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Creates valid TMDb API /movie/[movieId]/reviews URL for network requests
+     *
+     * @param movieId Movie id to use in URL
+     *
+     * @return  TMDb movie reviews URL
+     */
+    public static URL buildMovieReviewsUrl(int movieId) {
+        // Build TMDb movie reviews Uri
+        Uri.Builder uriBuilder = new Uri.Builder();
+        uriBuilder.scheme(API_SCHEME)
+                .authority(TMDB_API_AUTHORITY)
+                .appendPath(API_PATH_VERSION)
+                .appendPath(API_PATH_MOVIE)
+                .appendPath(String.valueOf(movieId))
+                .appendPath(API_PATH_REVIEWS);
+
+        // API token comes from grade.properties file, see README
+        uriBuilder.appendQueryParameter(API_PARAM_API_KEY, BuildConfig.TMDB_API_TOKEN);
+
+        Uri reviewsUri = uriBuilder.build();
+
+        try {
+            return new URL(reviewsUri.toString());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -245,8 +296,8 @@ public final class NetworkUtils {
      * Intent to open YouTube video
      * Tries to use YoutTube app, if it fails, it uses web browser
      *
-     * @param context
-     * @param videoKey
+     * @param context       Starting context
+     * @param videoKey      YouTube video key string
      */
     public static void openYoutubeIntent(Context context, String videoKey) {
         Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + videoKey));

@@ -17,7 +17,10 @@
 package cz.jtek.popularmovies;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,21 +30,23 @@ import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
+import cz.jtek.popularmovies.data.MovieContract;
+
 public class MovieGridAdapter
         extends RecyclerView.Adapter<MovieGridAdapter.MovieGridAdapterViewHolder> {
+
+    private static final String TAG = MovieGridAdapter.class.getSimpleName();
 
     public interface MovieGridOnClickHandler {
         void onClick(int itemId);
     }
 
     private List<TmdbData.Movie> mMovieList;
-    private TmdbData.Config mTmdbConfig;
 
     private Context mContext;
     final private int mRequestedWidth, mRequestedHeight;
 
     final private MovieGridOnClickHandler mClickHandler;
-
 
     /**
      * Class constructor - creates MovieGridAdapter.
@@ -50,9 +55,12 @@ public class MovieGridAdapter
      *                              when grid item is clicked.
      *
      */
-    MovieGridAdapter(MovieGridOnClickHandler clickHandler, int requestedWidth, int requestedHeight) {
+    MovieGridAdapter(MovieGridOnClickHandler clickHandler,
+                     Context context,
+                     int requestedWidth,
+                     int requestedHeight) {
         mClickHandler = clickHandler;
-        mContext = null;
+        mContext = context;
         mRequestedWidth = requestedWidth;
         mRequestedHeight = requestedHeight;
     }
@@ -61,14 +69,11 @@ public class MovieGridAdapter
             extends RecyclerView.ViewHolder
             implements View.OnClickListener {
 
-
-        //public final TextView mMovieTextView;
         final ImageView mMoviePosterImageView;
 
         // Attach OnClick listener when creating view
         MovieGridAdapterViewHolder(View view) {
             super(view);
-            //mMovieTextView = view.findViewById(R.id.tv_movie_item_title);
             mMoviePosterImageView = view.findViewById(R.id.iv_movie_item_poster);
             view.setOnClickListener(this);
         }
@@ -96,15 +101,11 @@ public class MovieGridAdapter
      *                  for more details.
      * @return A new MovieGridAdapterViewHolder that holds the View for each list item
      */
+    @NonNull
     @Override
-    public MovieGridAdapterViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        Context context = parent.getContext();
-        mContext = context;
-        int gridItemLayoutId = R.layout.movie_recycler_item;
-
-        LayoutInflater inflater = LayoutInflater.from(context);
-
-        View view = inflater.inflate(gridItemLayoutId, parent, false);
+    public MovieGridAdapterViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(mContext);
+        View view = inflater.inflate(R.layout.movie_recycler_item, parent, false);
         return new MovieGridAdapterViewHolder(view);
     }
 
@@ -118,13 +119,10 @@ public class MovieGridAdapter
      * @param position  The position of the item within the adapter's data set.
      */
     @Override
-    public void onBindViewHolder(MovieGridAdapterViewHolder holder, int position) {
-        String posterBaseUrl = mTmdbConfig.getSecureBaseUrl() + TmdbData.Config.getPosterSize();
-
+    public void onBindViewHolder(@NonNull MovieGridAdapterViewHolder holder, int position) {
         String posterPath = mMovieList.get(position).getPosterPath();
-
         Picasso.with(mContext)
-                .load(posterBaseUrl + posterPath)
+                .load(posterPath)
                 .resize(mRequestedWidth, mRequestedHeight)
                 .into(holder.mMoviePosterImageView);
     }
@@ -132,11 +130,11 @@ public class MovieGridAdapter
     /**
      * This method returns the number of items to display.
      *
-     * @return The number of items available in our forecast
+     * @return The number of items in grid
      */
     @Override
     public int getItemCount() {
-        if (null == mMovieList) return 0;
+        if (null == mMovieList) { return 0; }
         return mMovieList.size();
     }
 
@@ -145,11 +143,11 @@ public class MovieGridAdapter
      * created one.
      *
      */
-    void setMovieData(TmdbData.Config config, List<TmdbData.Movie> movieList) {
-        if (config != null && movieList != null) {
-            mTmdbConfig = config;
+    void setMovieData(List<TmdbData.Movie> movieList) {
+        if (movieList != null) {
             mMovieList = movieList;
             notifyDataSetChanged();
         }
     }
+
 }

@@ -21,20 +21,24 @@ import android.provider.BaseColumns;
 
 public class MovieContract {
 
+    public static final String MIME_TYPE_ITEM =
+            "vnd.android.cursor.item/vnd.cz.jtek.popularmovies.movie";
+    public static final String MIME_TYPE_DIR =
+            "vnd.android.cursor.dir/vnd.cz.jtek.popularmovies.movie";
+
     // Content provider name
     public static final String CONTENT_AUTHORITY = "cz.jtek.popularmovies";
 
-    public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
+    static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
 
     // Content provider paths
-    public static final String PATH_MOVIE = "movie";
-    public static final String PATH_MOVIE_FAVORITE = PATH_MOVIE + "/favorite";
+    public static final String PATH_MOVIES = "movie";
 
     // This class describes item of the movie table
     public static final class MovieEntry implements BaseColumns {
 
         public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon()
-                .appendPath(PATH_MOVIE)
+                .appendPath(PATH_MOVIES)
                 .build();
 
         public static final String TABLE_NAME = "movie";

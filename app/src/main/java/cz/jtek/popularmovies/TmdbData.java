@@ -31,17 +31,12 @@ public class TmdbData {
     private static final String TAG = TmdbData.class.getSimpleName();
 
     /**
-     *
+     * Custom exception for TMDb API request results
      */
     public static class TmdbStatusException extends Exception {
-        public TmdbStatusException(String message) {
-            super(message);
-        }
-
         public TmdbStatusException(int statusCode, String statusMessage) {
             super("TMDb status: " + statusCode + " (" + statusMessage + ")");
         }
-
     }
 
     /**
@@ -221,6 +216,21 @@ public class TmdbData {
 
         public Movie() { }
 
+        public Movie(
+                int id,
+                String title,
+                String posterPath,
+                String overview,
+                String releaseDate,
+                double voteAverage ) {
+            mId = id;
+            mTitle = title;
+            mPosterPath = posterPath;
+            mOverview = overview;
+            mReleaseDate = releaseDate;
+            mVoteAverage = voteAverage;
+        }
+
         // Constructor converting JSON object to object instance
         static Movie fromJson(JSONObject jsonObject)
                 throws JSONException {
@@ -397,7 +407,6 @@ public class TmdbData {
             }
             return videos;
         }
-
     }
 
     /**
@@ -472,6 +481,5 @@ public class TmdbData {
             }
             return reviews;
         }
-
     }
 }

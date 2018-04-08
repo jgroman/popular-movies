@@ -24,6 +24,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,7 +51,7 @@ public class MovieReviewFragment extends Fragment
     private int mViewWidth;
 
     // AsyncLoader
-    private static final int LOADER_ID_REVIEW_LIST = 3;
+    private static final int LOADER_ID_REVIEW_LIST = 33;
     private static final String LOADER_BUNDLE_MOVIE_ID = "movie-id";
 
     @Nullable
@@ -97,7 +98,6 @@ public class MovieReviewFragment extends Fragment
 
         // Check for network availability
         if (NetworkUtils.isNetworkAvailable(mContext)) {
-            Log.d(TAG, "onCreateView: *** LOADER");
             // Store movie id into loader args bundle
             Bundle loaderArgsBundle = new Bundle();
             loaderArgsBundle.putInt(LOADER_BUNDLE_MOVIE_ID, movieId);
@@ -177,6 +177,9 @@ public class MovieReviewFragment extends Fragment
                         UIUtils.showListViewFullHeight(mReviewListView, mViewWidth);
                         showMovieReviewsView();
                     }
+
+                    // Destroy this loader (otherwise is gets called twice for some reason)
+                    getLoaderManager().destroyLoader(LOADER_ID_REVIEW_LIST);
                 }
 
                 @Override
@@ -285,11 +288,11 @@ public class MovieReviewFragment extends Fragment
 
             try {
                 // Load movie review list
-                //URL movieReviewsUrl = NetworkUtils.buildMovieReviewsUrl(movieId);
-                //String jsonMovieReviews = NetworkUtils.getResponseFromHttpUrl(movieReviewsUrl);
+                URL movieReviewsUrl = NetworkUtils.buildMovieReviewsUrl(movieId);
+                String jsonMovieReviews = NetworkUtils.getResponseFromHttpUrl(movieReviewsUrl);
 
                 // Example mock request used for debugging to avoid sending network queries
-                String jsonMovieReviews = MockDataUtils.getMockJson(getContext(), "mock_reviews");
+                // String jsonMovieReviews = MockDataUtils.getMockJson(getContext(), "mock_reviews");
 
                 // Use only videos of type "Trailer"
                 TmdbJsonUtils.TmdbJsonResult<List<TmdbData.Review>> reviewResult =

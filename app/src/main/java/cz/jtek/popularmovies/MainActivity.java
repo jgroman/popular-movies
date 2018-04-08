@@ -16,18 +16,16 @@
 
 package cz.jtek.popularmovies;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Point;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -35,19 +33,19 @@ import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.IOException;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
+import cz.jtek.popularmovies.data.MovieContract;
+import cz.jtek.popularmovies.data.MovieContract.MovieEntry;
 import cz.jtek.popularmovies.utilities.MockDataUtils;
 import cz.jtek.popularmovies.utilities.NetworkUtils;
 import cz.jtek.popularmovies.utilities.NetworkUtils.AsyncTaskResult;
@@ -61,7 +59,6 @@ public class MainActivity
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private TmdbData mTmdbData;
     private TmdbData.Config mTmdbConfig;
     private List<TmdbData.Movie> mTmdbMovieList;
 
@@ -74,6 +71,7 @@ public class MainActivity
     // Grid Adapter
     private static final int DEFAULT_GRID_COLUMNS = 3;
     private MovieGridAdapter mMovieGridAdapter;
+    private int mOptimalWidth, mOptimalHeight;
 
     // Movie detail activity extras
     public static final String EXTRA_MOVIE = "movie";
@@ -86,6 +84,7 @@ public class MainActivity
     // AsyncLoader
     private static final int LOADER_ID_CONFIG     = 0;
     private static final int LOADER_ID_MOVIELIST = 1;
+    private static final int LOADER_ID_CURSOR     = 2;
     private static final String LOADER_BUNDLE_KEY_PAGE = "page";
     private static final String LOADER_BUNDLE_KEY_SORT_ORDER = "sort-order";
     private int mApiResultsPageToLoad = 1;
@@ -105,8 +104,8 @@ public class MainActivity
         int displayWidth = UIUtils.getDisplayWidth(this);
 
         int gridColumns = DEFAULT_GRID_COLUMNS;
-        int optimalWidth = TmdbData.Config.getPosterWidth();
-        int optimalHeight = TmdbData.Config.getPosterHeight();
+        mOptimalWidth = TmdbData.Config.getPosterWidth();
+        mOptimalHeight = TmdbData.Config.getPosterHeight();
 
         if (displayWidth > 0) {
             // Number of columns which fits into current display width
@@ -117,12 +116,20 @@ public class MainActivity
             }
 
             // Optimal column width to fill all available space
-            optimalWidth = displayWidth / gridColumns;
+            mOptimalWidth = displayWidth / gridColumns;
             // Factor to resize original image with
-            double resizeFactor = (double) optimalWidth / (double) TmdbData.Config.getPosterWidth();
+            double resizeFactor = (double) mOptimalWidth / (double) TmdbData.Config.getPosterWidth();
             // Resized image height
-            optimalHeight = (int) ((double) TmdbData.Config.getPosterHeight() * resizeFactor);
+            mOptimalHeight = (int) ((double) TmdbData.Config.getPosterHeight() * resizeFactor);
         }
+
+        // Shared Preferences and preference change listener
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        sp.registerOnSharedPreferenceChangeListener(this);
+
+        // Obtain current sort order from shared preferences
+        String defaultSortOrder = getResources().getString(R.string.pref_sort_order_top_rated);
+        String prefSortOrder = sp.getString(PREF_KEY_SORT_ORDER, defaultSortOrder);
 
         // Layout
         GridLayoutManager layoutManager = new GridLayoutManager(this, gridColumns);
@@ -130,20 +137,24 @@ public class MainActivity
         mRecyclerView.setHasFixedSize(true);
 
         // Sending preferred image size to grid adapter
-        mMovieGridAdapter = new MovieGridAdapter(this, optimalWidth, optimalHeight);
+        mMovieGridAdapter = new MovieGridAdapter(this, this, mOptimalWidth, mOptimalHeight);
         mRecyclerView.setAdapter(mMovieGridAdapter);
 
-        // Shared Preferences and preference change listener
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        sp.registerOnSharedPreferenceChangeListener(this);
-
-        // Check for network availability
-        if (!NetworkUtils.isNetworkAvailable(this)) {
-            // Network is not available
-            showErrorMessage(getResources().getString(R.string.error_msg_no_network));
-        } else {
-            // Initialize config loader (which in turn initializes movie list loader)
-            getSupportLoaderManager().initLoader(LOADER_ID_CONFIG, null, configLoaderListener);
+        // Start loaders depending on sort type preference
+        if (prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_favorite))) {
+            getSupportLoaderManager().initLoader(LOADER_ID_CURSOR, null, favoriteLoaderListener);
+        }
+        else if (prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_most_popular)) ||
+                    prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_top_rated))) {
+            // Check for network availability
+            if (!NetworkUtils.isNetworkAvailable(this)) {
+                // Network is not available
+                showErrorMessage(getResources().getString(R.string.error_msg_no_network));
+            }
+            else {
+                // Initialize config loader (which in turn runs movie list loader)
+                getSupportLoaderManager().initLoader(LOADER_ID_CONFIG, null, configLoaderListener);
+            }
         }
     }
 
@@ -158,32 +169,42 @@ public class MainActivity
         prefsUpdatedFlag = true;
     }
 
+    /**
+     *
+     */
     @Override
     protected void onStart() {
         super.onStart();
 
         if (prefsUpdatedFlag) {
+            // We are returning to this activity after preference change
             prefsUpdatedFlag = false;
 
-            // On preference change restart loading results from page 1
+            // Restart loading results from page 1
             mApiResultsPageToLoad = 1;
 
-            // Check for network availability
-            if (!NetworkUtils.isNetworkAvailable(this)) {
-                // Network is not available
-                showErrorMessage(getResources().getString(R.string.error_msg_no_network));
-            } else {
+            // Shared Preferences and preference change listener
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-                Bundle loaderArgsBundle = new Bundle();
-                // Store results page into loader args bundle
-                loaderArgsBundle.putInt(LOADER_BUNDLE_KEY_PAGE, mApiResultsPageToLoad);
-                // Store results sort order into loader args bundle
-                String defaultSortOrder = getResources().getString(R.string.pref_sort_order_top_rated);
-                String prefSortOrder = sp.getString(PREF_KEY_SORT_ORDER, defaultSortOrder);
-                loaderArgsBundle.putString(LOADER_BUNDLE_KEY_SORT_ORDER, prefSortOrder);
+            // Obtain current sort order from shared preferences
+            String defaultSortOrder = getResources().getString(R.string.pref_sort_order_top_rated);
+            String prefSortOrder = sp.getString(PREF_KEY_SORT_ORDER, defaultSortOrder);
 
-                getSupportLoaderManager().restartLoader(LOADER_ID_MOVIELIST, loaderArgsBundle, movieListLoaderListener);
+            // Start loaders depending on sort type preference
+            if (prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_favorite))) {
+                getSupportLoaderManager().initLoader(LOADER_ID_CURSOR, null, favoriteLoaderListener);
+            }
+            else if (prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_most_popular)) ||
+                    prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_top_rated))) {
+                // Check for network availability
+                if (!NetworkUtils.isNetworkAvailable(this)) {
+                    // Network is not available
+                    showErrorMessage(getResources().getString(R.string.error_msg_no_network));
+                }
+                else {
+                    // Initialize config loader (which in turn runs movie list loader)
+                    getSupportLoaderManager().initLoader(LOADER_ID_CONFIG, null, configLoaderListener);
+                }
             }
         }
     }
@@ -226,10 +247,7 @@ public class MainActivity
     @Override
     public void onClick(int itemId) {
         Intent intent = new Intent(this, MovieDetailActivity.class);
-
-        intent.putExtra(EXTRA_CONFIG, mTmdbConfig);
         intent.putExtra(EXTRA_MOVIE, mTmdbMovieList.get(itemId));
-
         startActivity(intent);
     }
 
@@ -274,6 +292,7 @@ public class MainActivity
                 @Override
                 public void onLoadFinished(@NonNull Loader<AsyncTaskResult<TmdbData.Config>> loader,
                                            AsyncTaskResult<TmdbData.Config> data) {
+
                     if (data.hasException()) {
                         mLoadingIndicator.setVisibility(View.INVISIBLE);
                         // There was an error during data loading
@@ -299,6 +318,9 @@ public class MainActivity
                         loaderArgsBundle.putString(LOADER_BUNDLE_KEY_SORT_ORDER, prefSortOrder);
 
                         getSupportLoaderManager().initLoader(LOADER_ID_MOVIELIST, loaderArgsBundle, movieListLoaderListener);
+
+                        // Destroy this loader (otherwise is gets called twice for some reason)
+                        getSupportLoaderManager().destroyLoader(LOADER_ID_CONFIG);
                     }
                 }
 
@@ -324,6 +346,7 @@ public class MainActivity
                 @Override
                 public void onLoadFinished(@NonNull Loader<AsyncTaskResult<List<TmdbData.Movie>>> loader,
                                            AsyncTaskResult<List<TmdbData.Movie>> data) {
+
                     mLoadingIndicator.setVisibility(View.INVISIBLE);
 
                     if (data.hasException()) {
@@ -337,9 +360,21 @@ public class MainActivity
                         }
                     } else {
                         // Valid results received
+                        // Patching poster path to include poster base URL
+                        String posterBaseUrl = mTmdbConfig.getSecureBaseUrl() + TmdbData.Config.getPosterSize();
+
                         mTmdbMovieList = data.getResult();
-                        mMovieGridAdapter.setMovieData(mTmdbConfig, mTmdbMovieList);
+
+                        for (TmdbData.Movie movie : mTmdbMovieList) {
+                            String posterPath = posterBaseUrl + movie.getPosterPath();
+                            movie.setPosterPath(posterPath);
+                        }
+
+                        mMovieGridAdapter.setMovieData(mTmdbMovieList);
                         showMovieDataView();
+
+                        // Destroy this loader (otherwise is gets called twice for some reason)
+                        getSupportLoaderManager().destroyLoader(LOADER_ID_MOVIELIST);
                     }
                 }
 
@@ -350,7 +385,56 @@ public class MainActivity
             };
 
     /**
-     * TMDb API data async task loader implementation
+     * Loader callbacks for favorite list loader
+     */
+    private LoaderManager.LoaderCallbacks<Cursor> favoriteLoaderListener =
+            new LoaderManager.LoaderCallbacks<Cursor>() {
+
+                @NonNull
+                @Override
+                public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
+                    return new CursorLoader(mContext,
+                            MovieContract.MovieEntry.CONTENT_URI,
+                            null,
+                            null,
+                            null,
+                            null
+                            );
+                }
+
+                @Override
+                public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+
+                    // Copy data from cursor to array list
+                    mTmdbMovieList = new ArrayList<>();
+
+                    while(data.moveToNext()) {
+                        TmdbData.Movie movie = new TmdbData.Movie(
+                                data.getInt(data.getColumnIndex(MovieEntry.COL_MOVIE_ID)),
+                                data.getString(data.getColumnIndex(MovieEntry.COL_TITLE)),
+                                data.getString(data.getColumnIndex(MovieEntry.COL_POSTER_PATH)),
+                                data.getString(data.getColumnIndex(MovieEntry.COL_OVERVIEW)),
+                                data.getString(data.getColumnIndex(MovieEntry.COL_RELEASE_DATE)),
+                                data.getDouble(data.getColumnIndex(MovieEntry.COL_VOTE_AVERAGE))
+                        );
+                        mTmdbMovieList.add(movie);
+                    }
+                    mMovieGridAdapter.setMovieData(mTmdbMovieList);
+                    showMovieDataView();
+
+                    // Destroy this loader (otherwise is gets called twice for some reason)
+                    getSupportLoaderManager().destroyLoader(LOADER_ID_CURSOR);
+                }
+
+                @Override
+                public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+                    // Not used
+                }
+            };
+
+
+    /**
+     * TMDb API movie list async task loader implementation
      */
     public static class TmdbMovieListLoader
             extends AsyncTaskLoader<AsyncTaskResult<List<TmdbData.Movie>>> {
@@ -421,7 +505,7 @@ public class MainActivity
     }
 
     /**
-     *
+     * TMDb API configuration async task loader
      */
     public static class TmdbConfigLoader
             extends AsyncTaskLoader<AsyncTaskResult<TmdbData.Config>> {

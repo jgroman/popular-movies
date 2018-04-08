@@ -10,8 +10,11 @@ import okhttp3.OkHttpClient;
 public class PopularMoviesApplication extends Application {
     public void onCreate() {
         super.onCreate();
+
+        // Initialize Stetho
         Stetho.initializeWithDefaults(this);
 
+        // Enable Stetho network inspection
         new OkHttpClient.Builder()
                 .addNetworkInterceptor(new StethoInterceptor())
                 .build();

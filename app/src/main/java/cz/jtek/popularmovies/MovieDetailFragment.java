@@ -17,11 +17,18 @@
 package cz.jtek.popularmovies;
 
 import android.app.Activity;
+import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.text.SpannableString;
 import android.text.style.LeadingMarginSpan;
 import android.util.Log;
@@ -41,12 +48,18 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import cz.jtek.popularmovies.data.MovieContract;
+
 public class MovieDetailFragment extends Fragment {
 
     private static final String TAG = MovieDetailFragment.class.getSimpleName();
 
     private Context mContext;
     ToggleButton mFavoriteToggle;
+    private TmdbData.Movie mMovie = new TmdbData.Movie();
+
+    private static final int LOADER_ID_FAVORITE_ITEM = 12;
+    private static final String LOADER_BUNDLE_MOVIE_ID = "movie-id";
 
     @Nullable
     @Override
@@ -59,8 +72,7 @@ public class MovieDetailFragment extends Fragment {
         Activity activity = getActivity();
         if (null == activity) { return null; }
 
-        // Store current context
-        mContext = getActivity().getApplicationContext();
+        mContext = activity.getApplicationContext();
 
         View view = inflater.inflate(R.layout.fragment_movie_detail, container, false);
 
@@ -70,35 +82,30 @@ public class MovieDetailFragment extends Fragment {
         Bundle args = getArguments();
 
         if (args != null) {
-            if (args.containsKey(MainActivity.EXTRA_MOVIE) && args.containsKey(MainActivity.EXTRA_CONFIG)) {
+            if (args.containsKey(MainActivity.EXTRA_MOVIE)) {
 
-                // TMDb configuration contains base URL for posters
-                TmdbData.Config config = args.getParcelable(MainActivity.EXTRA_CONFIG);
-                TmdbData.Movie movie = args.getParcelable(MainActivity.EXTRA_MOVIE);
+                mMovie = args.getParcelable(MainActivity.EXTRA_MOVIE);
 
-                if (movie != null) {
+                if (mMovie != null) {
+
                     // Movie title
                     TextView titleTextView = view.findViewById(R.id.tv_detail_title);
-                    titleTextView.setText(movie.getTitle());
+                    titleTextView.setText(mMovie.getTitle());
 
                     // Poster
-                    if (config != null) {
-                        ImageView posterImageView = view.findViewById(R.id.iv_detail_poster);
-                        String posterBaseUrl = config.getSecureBaseUrl() + TmdbData.Config.getPosterSize();
-
-                        Picasso.with(mContext)
-                                .load(posterBaseUrl + movie.getPosterPath())
-                                .into(posterImageView);
-                    }
+                    ImageView posterImageView = view.findViewById(R.id.iv_detail_poster);
+                    Picasso.with(mContext)
+                            .load(mMovie.getPosterPath())
+                            .into(posterImageView);
 
                     // Vote average
                     TextView voteAverageTextView = view.findViewById(R.id.tv_detail_vote_average);
-                    voteAverageTextView.setText(String.format(Locale.getDefault(),"%.1f", movie.getVoteAverage()));
+                    voteAverageTextView.setText(String.format(Locale.getDefault(),"%.1f", mMovie.getVoteAverage()));
 
                     // Release date
                     TextView releaseTextView = view.findViewById(R.id.tv_detail_release_date);
 
-                    String releaseDateString = movie.getReleaseDate();
+                    String releaseDateString = mMovie.getReleaseDate();
 
                     DateFormat dateFormatAPI = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
                     DateFormat dateFormatOutput = DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault());
@@ -113,18 +120,21 @@ public class MovieDetailFragment extends Fragment {
                     // Overview
                     TextView overviewTextView = view.findViewById(R.id.tv_detail_overview);
 
-                    String overview = movie.getOverview();
+                    String overview = mMovie.getOverview();
                     SpannableString overviewSpannable = new SpannableString(overview);
                     overviewSpannable.setSpan(new LeadingMarginSpan.Standard(24, 0),0, overview.length(),0);
 
                     overviewTextView.setText(overviewSpannable);
 
+                    // Start favorite status loader
+                    Bundle loaderArgsBundle = new Bundle();
+                    loaderArgsBundle.putInt(LOADER_BUNDLE_MOVIE_ID, mMovie.getId());
+                    // Loader initialization
+                    getLoaderManager().initLoader(LOADER_ID_FAVORITE_ITEM, loaderArgsBundle, favoriteItemLoaderListener);
+
                 }
             }
-
         }
-
-
         return(view);
     }
 
@@ -135,13 +145,92 @@ public class MovieDetailFragment extends Fragment {
             new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                    if (isChecked) {
-                        // The toggle is enabled
-                        Log.d(TAG, "onCheckedChanged: enabled");
-                    } else {
-                        // The toggle is disabled
-                        Log.d(TAG, "onCheckedChanged: disabled");
-                    }
+                    processFavoriteMovie(mMovie, isChecked);
                 }
             };
+
+
+    /**
+     * Store favorite status changes
+     *
+     * @param movie        Movie to be processed
+     * @param isFavorite  Favorite flag status
+     */
+    private void processFavoriteMovie(@NonNull TmdbData.Movie movie, boolean isFavorite) {
+
+        if (isFavorite) {
+            // Store favorite movie and set favorite flag to 1
+            ContentValues values = new ContentValues();
+            values.put(MovieContract.MovieEntry.COL_MOVIE_ID, movie.getId());
+            values.put(MovieContract.MovieEntry.COL_TITLE, movie.getTitle());
+            values.put(MovieContract.MovieEntry.COL_OVERVIEW, movie.getOverview());
+            values.put(MovieContract.MovieEntry.COL_POSTER_PATH, movie.getPosterPath());
+            values.put(MovieContract.MovieEntry.COL_RELEASE_DATE, movie.getReleaseDate());
+            values.put(MovieContract.MovieEntry.COL_VOTE_AVERAGE, movie.getVoteAverage());
+            values.put(MovieContract.MovieEntry.COL_FAVORITE, 1);
+
+            mContext.getContentResolver().insert(MovieContract.MovieEntry.CONTENT_URI, values);
+        }
+        else {
+            // Currently there's no need for non favorite movies to be stored
+            Uri currentMovieUri = ContentUris.withAppendedId(MovieContract.MovieEntry.CONTENT_URI, movie.getId());
+            int rowsDeleted = mContext.getContentResolver().delete(currentMovieUri, null, null);
+            if (rowsDeleted == 0) {
+                Log.e(TAG, "processFavoriteMovie: Error deleting movie id " + movie.getId() );
+            }
+        }
+    }
+
+    /**
+     * Loader callbacks for favorite item loader
+     */
+    private LoaderManager.LoaderCallbacks<Cursor> favoriteItemLoaderListener =
+            new LoaderManager.LoaderCallbacks<Cursor>() {
+
+                @NonNull
+                @Override
+                public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
+                    if (args == null) {
+                        throw new NullPointerException("Argument bundle cannot be null");
+                    }
+
+                    int movieId = args.getInt(LOADER_BUNDLE_MOVIE_ID, 0);
+
+                    String[] projection = {
+                            MovieContract.MovieEntry._ID,
+                            MovieContract.MovieEntry.COL_MOVIE_ID
+                    };
+                    String selection = MovieContract.MovieEntry.COL_MOVIE_ID + " = ?";
+                    selection += " AND " + MovieContract.MovieEntry.COL_FAVORITE + " = ?";
+                    String[] selectionArgs = new String[]{ String.valueOf(movieId), "1"};
+
+                    return new CursorLoader(mContext,
+                            MovieContract.MovieEntry.CONTENT_URI,
+                            projection,
+                            selection,
+                            selectionArgs,
+                            null
+                    );
+                }
+
+                @Override
+                public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+                    if (data.getCount() > 0) {
+                        // Non zero rows on favorite query cursor = this movie is favorite
+                        mFavoriteToggle.setChecked(true);
+                    }
+                    else {
+                        mFavoriteToggle.setChecked(false);
+                    }
+
+                    // Destroy this loader (otherwise is gets called twice for some reason)
+                    getLoaderManager().destroyLoader(LOADER_ID_FAVORITE_ITEM);
+                }
+
+                @Override
+                public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+                    // Not implemented
+                }
+            };
+
 }
