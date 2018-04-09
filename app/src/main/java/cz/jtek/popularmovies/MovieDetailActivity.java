@@ -36,6 +36,11 @@ public class MovieDetailActivity extends AppCompatActivity {
 
         if (findViewById(R.id.detail_container) != null) {
 
+            // Apparently just assigning id to a view is enough to trigger
+            // automatic saving / restoring of view instance state
+            // That's why savedInstanceState bundle may exist even without explicitly
+            // using onSaveInstanceState method
+
             if (null == savedInstanceState) {
 
                 Intent startingIntent = getIntent();
@@ -72,8 +77,5 @@ public class MovieDetailActivity extends AppCompatActivity {
                         .commit();
             }
         }
-
-
     }
-
 }

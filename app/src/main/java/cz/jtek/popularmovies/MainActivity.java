@@ -103,8 +103,6 @@ public class MainActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Log.d(TAG, "onCreate: ");
-
         mRecyclerView = findViewById(R.id.recyclerview_movies);
         mErrorMessage = findViewById(R.id.tv_error_message);
         mLoadingIndicator = findViewById(R.id.pb_loading);
@@ -196,7 +194,6 @@ public class MainActivity
      */
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        Log.d(TAG, "onSharedPreferenceChanged: ");
         sPrefsUpdatedFlag = true;
     }
 
@@ -206,8 +203,6 @@ public class MainActivity
     @Override
     protected void onStart() {
         super.onStart();
-
-        Log.d(TAG, "onStart: " + sPrefsUpdatedFlag);
 
         if (sPrefsUpdatedFlag) {
             // We are returning to this activity after preference change
@@ -244,7 +239,6 @@ public class MainActivity
 
     @Override
     public void onResume() {
-        Log.d(TAG, "onResume: ");
         super.onResume();
 
         if (mLayoutManagerSaveState != null) {
@@ -616,8 +610,6 @@ public class MainActivity
 
         @Override
         public AsyncTaskResult<TmdbData.Config> loadInBackground() {
-            Log.d(TAG, "loadInBackground: ***** CONFIG loader loading");
-
             try {
                 // Example mock request used for debugging to avoid sending network queries
                 // String jsonConfig = MockDataUtils.getMockJson(getContext(), "mock_configuration");
