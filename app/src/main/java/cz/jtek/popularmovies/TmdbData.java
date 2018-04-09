@@ -314,13 +314,12 @@ public class TmdbData {
                 return new Movie[size];
             }
         };
-
     }
 
     /**
      *
      */
-    public static class Video {
+    public static class Video implements Parcelable {
         // API Movie Videos
         // https://developers.themoviedb.org/3/movies/get-movie-videos
         public static final String RESULTS = "results";
@@ -361,6 +360,8 @@ public class TmdbData {
         // Type
         public String getType() { return mType; }
         public void setType(String type) { mType = type; }
+
+        Video() { }
 
         // Constructor converting JSON object to object instance
         static Video fromJson(JSONObject jsonObject) throws JSONException {
@@ -407,12 +408,47 @@ public class TmdbData {
             }
             return videos;
         }
+
+        private Video(Parcel in) {
+            mId   = in.readString();
+            mName = in.readString();
+            mKey  = in.readString();
+            mSite = in.readString();
+            mType = in.readString();
+        }
+
+        @Override
+        public int describeContents() {
+            // No file descriptors in class members
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel parcel, int flags) {
+            parcel.writeString(mId);
+            parcel.writeString(mName);
+            parcel.writeString(mKey);
+            parcel.writeString(mSite);
+            parcel.writeString(mType);
+        }
+
+        static final Parcelable.Creator<Video> CREATOR
+                = new Parcelable.Creator<Video>() {
+
+            public Video createFromParcel(Parcel in) {
+                return new Video(in);
+            }
+
+            public Video[] newArray(int size) {
+                return new Video[size];
+            }
+        };
     }
 
     /**
      *
      */
-    public static class Review {
+    public static class Review implements Parcelable {
         // API Movie Reviews
         // https://developers.themoviedb.org/3/movies/get-movie-reviews
         public static final String RESULTS = "results";
@@ -442,6 +478,8 @@ public class TmdbData {
         // URL
         public String getUrl() { return mUrl; }
         //public void setUrl(String url) { mUrl = url; }
+
+        Review() {}
 
         // Constructor converting JSON object to object instance
         static Review fromJson(JSONObject jsonObject)
@@ -481,5 +519,39 @@ public class TmdbData {
             }
             return reviews;
         }
+
+        private Review(Parcel in) {
+            mId      = in.readString();
+            mAuthor  = in.readString();
+            mContent = in.readString();
+            mUrl     = in.readString();
+        }
+
+        @Override
+        public int describeContents() {
+            // No file descriptors in class members
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel parcel, int flags) {
+            parcel.writeString(mId);
+            parcel.writeString(mAuthor);
+            parcel.writeString(mContent);
+            parcel.writeString(mUrl);
+        }
+
+        static final Parcelable.Creator<Review> CREATOR
+                = new Parcelable.Creator<Review>() {
+
+            public Review createFromParcel(Parcel in) {
+                return new Review(in);
+            }
+
+            public Review[] newArray(int size) {
+                return new Review[size];
+            }
+        };
+
     }
 }

@@ -16,6 +16,7 @@
 
 package cz.jtek.popularmovies;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.preference.CheckBoxPreference;
@@ -23,6 +24,9 @@ import android.support.v7.preference.ListPreference;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.preference.PreferenceScreen;
+import android.util.Log;
+
+import static android.app.Activity.RESULT_OK;
 
 /**
  * The SettingsFragment serves as the display for all of the user settings.
@@ -31,6 +35,9 @@ import android.support.v7.preference.PreferenceScreen;
 public class SettingsFragment
         extends PreferenceFragmentCompat
         implements SharedPreferences.OnSharedPreferenceChangeListener {
+
+    @SuppressWarnings("unused")
+    private static final String TAG = SettingsFragment.class.getSimpleName();
 
     /**
      * This method updates selected preference summary to given string
@@ -90,9 +97,18 @@ public class SettingsFragment
     @Override
     public void onPause() {
         super.onPause();
+
         // Unregister Preference change listener
         getPreferenceScreen().getSharedPreferences()
                 .unregisterOnSharedPreferenceChangeListener(this);
+
+        Log.d(TAG, "onPause: ");
+
+        Intent intent = new Intent();
+        intent.putExtra("pref-change", true);
+        getActivity().setResult(RESULT_OK, intent);
+
+        getActivity().finish();
     }
 
     /**

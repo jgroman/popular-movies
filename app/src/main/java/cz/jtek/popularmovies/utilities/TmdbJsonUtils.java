@@ -96,9 +96,9 @@ public class TmdbJsonUtils {
      *
      * @return TmdbJsonResult object with either list of Tmdb.Movie objects or exception
      */
-    public static TmdbJsonResult<List<TmdbData.Movie>> getMovieListFromJson(String tmdbMovieJsonString) {
+    public static TmdbJsonResult<ArrayList<TmdbData.Movie>> getMovieListFromJson(String tmdbMovieJsonString) {
 
-        List<TmdbData.Movie> moviesList = new ArrayList<>();
+        ArrayList<TmdbData.Movie> moviesList = new ArrayList<>();
 
         try {
             JSONObject movieJson = new JSONObject(tmdbMovieJsonString);
@@ -134,9 +134,9 @@ public class TmdbJsonUtils {
      *
      * @return TmdbJsonResult object with either list of Tmdb.Video objects or exception
      */
-    public static TmdbJsonResult<List<TmdbData.Video>> getVideoListFromJson(String tmdbJson, String filterType) {
+    public static TmdbJsonResult<ArrayList<TmdbData.Video>> getVideoListFromJson(String tmdbJson, String filterType) {
 
-        List<TmdbData.Video> videoList = new ArrayList<>();
+        ArrayList<TmdbData.Video> videoList = new ArrayList<>();
 
         try {
             JSONObject videoJson = new JSONObject(tmdbJson);
@@ -171,9 +171,9 @@ public class TmdbJsonUtils {
      *
      * @return TmdbJsonResult object with either list of Tmdb.Review objects or exception
      */
-    public static TmdbJsonResult<List<TmdbData.Review>> getReviewListFromJson(String tmdbJson) {
+    public static TmdbJsonResult<ArrayList<TmdbData.Review>> getReviewListFromJson(String tmdbJson) {
 
-        List<TmdbData.Review> reviewList = new ArrayList<>();
+        ArrayList<TmdbData.Review> reviewList = new ArrayList<>();
 
         try {
             JSONObject reviewJson = new JSONObject(tmdbJson);

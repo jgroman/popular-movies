@@ -30,7 +30,6 @@ import android.util.Log;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -45,6 +44,7 @@ import cz.jtek.popularmovies.R;
  */
 public final class NetworkUtils {
 
+    @SuppressWarnings("unused")
     private static final String TAG = NetworkUtils.class.getSimpleName();
 
     /*
@@ -88,9 +88,7 @@ public final class NetworkUtils {
         Uri tmdbConfigUri = uriBuilder.build();
 
         try {
-            URL tmdbConfigUrl = new URL(tmdbConfigUri.toString());
-            Log.d(TAG, "URL config: " + tmdbConfigUrl);
-            return tmdbConfigUrl;
+            return new URL(tmdbConfigUri.toString());
         } catch (MalformedURLException e) {
             e.printStackTrace();
             throw new RuntimeException(e);

@@ -48,14 +48,14 @@ import cz.jtek.popularmovies.utilities.TmdbJsonUtils;
 import cz.jtek.popularmovies.utilities.UIUtils;
 
 public class MovieVideoFragment extends Fragment
-    implements LoaderManager.LoaderCallbacks<AsyncTaskResult<List<TmdbData.Video>>>,
+    implements LoaderManager.LoaderCallbacks<AsyncTaskResult<ArrayList<TmdbData.Video>>>,
     AdapterView.OnItemClickListener
 {
     private static final String TAG = MovieVideoFragment.class.getSimpleName();
 
     private Context mContext;
 
-    List<TmdbData.Video> mVideoList;
+    ArrayList<TmdbData.Video> mVideoList;
     VideoListItemAdapter mVideoListItemAdapter;
 
     private ListView mVideoListView;
@@ -67,6 +67,9 @@ public class MovieVideoFragment extends Fragment
     // AsyncLoader
     private static final int LOADER_ID_VIDEO_LIST = 22;
     private static final String LOADER_BUNDLE_MOVIE_ID = "movie-id";
+
+    // Instance State bundle keys
+    private static final String KEY_VIDEO_LIST = "video-list";
 
     @Nullable
     @Override
@@ -87,37 +90,48 @@ public class MovieVideoFragment extends Fragment
         // Obtain view width for list height calculation
         mViewWidth = UIUtils.getDisplayWidth(mContext);
 
+        mErrorMessage = view.findViewById(R.id.tv_video_error_message);
+        mLoadingIndicator = view.findViewById(R.id.pb_video_loading);
+
+        if (savedInstanceState != null) {
+            // Restoring video list from saved instance state
+            mVideoList = savedInstanceState.getParcelableArrayList(KEY_VIDEO_LIST);
+        }
+        else {
+            mVideoList = new ArrayList<>();
+        }
+
         // Video ListView
-        mVideoList = new ArrayList<>();
         mVideoListItemAdapter = new VideoListItemAdapter(mContext, R.layout.item_movie_video, mVideoList);
         mVideoListView = view.findViewById(R.id.lv_detail_videos);
         mVideoListView.setAdapter(mVideoListItemAdapter);
         mVideoListView.setOnItemClickListener(this);
         UIUtils.showListViewFullHeight(mVideoListView, mViewWidth);
 
-        mErrorMessage = view.findViewById(R.id.tv_video_error_message);
-        mLoadingIndicator = view.findViewById(R.id.pb_video_loading);
+        if (savedInstanceState == null) {
+            // If not restoring from saved instance state, start video list loader
 
-        int movieId = 0;
-        Bundle args = getArguments();
+            int movieId = 0;
+            Bundle args = getArguments();
 
-        if (args != null) {
-            if (args.containsKey(MovieDetailActivity.BUNDLE_MOVIE_ID)) {
-                // Obtain movie ID from fragment arguments
-                movieId = args.getInt(MovieDetailActivity.BUNDLE_MOVIE_ID);
+            if (args != null) {
+                if (args.containsKey(MovieDetailActivity.BUNDLE_MOVIE_ID)) {
+                    // Obtain movie ID from fragment arguments
+                    movieId = args.getInt(MovieDetailActivity.BUNDLE_MOVIE_ID);
+                }
             }
-        }
 
-        // Check for network availability
-        if (NetworkUtils.isNetworkAvailable(mContext)) {
-            // Store movie id into loader args bundle
-            Bundle loaderArgsBundle = new Bundle();
-            loaderArgsBundle.putInt(LOADER_BUNDLE_MOVIE_ID, movieId);
-            // Loader initialization
-            getLoaderManager().initLoader(LOADER_ID_VIDEO_LIST, loaderArgsBundle, MovieVideoFragment.this);
-        } else {
-            // Network is not available
-            showErrorMessage(getResources().getString(R.string.error_msg_no_network));
+            // Check for network availability
+            if (NetworkUtils.isNetworkAvailable(mContext)) {
+                // Store movie id into loader args bundle
+                Bundle loaderArgsBundle = new Bundle();
+                loaderArgsBundle.putInt(LOADER_BUNDLE_MOVIE_ID, movieId);
+                // Loader initialization
+                getLoaderManager().initLoader(LOADER_ID_VIDEO_LIST, loaderArgsBundle, MovieVideoFragment.this);
+            } else {
+                // Network is not available
+                showErrorMessage(getResources().getString(R.string.error_msg_no_network));
+            }
         }
 
         return(view);
@@ -140,17 +154,25 @@ public class MovieVideoFragment extends Fragment
         }
     }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        // Store video list
+        outState.putParcelableArrayList(KEY_VIDEO_LIST, mVideoList);
+
+        super.onSaveInstanceState(outState);
+    }
+
     @NonNull
     @Override
-    public Loader<AsyncTaskResult<List<TmdbData.Video>>> onCreateLoader(int id, Bundle args) {
+    public Loader<AsyncTaskResult<ArrayList<TmdbData.Video>>> onCreateLoader(int id, Bundle args) {
         // Show loading indicator
         mLoadingIndicator.setVisibility(View.VISIBLE);
         return new TmdbMovieVideoLoader(mContext, args);
     }
 
     @Override
-    public void onLoadFinished(@NonNull  Loader<AsyncTaskResult<List<TmdbData.Video>>> loader,
-                               AsyncTaskResult<List<TmdbData.Video>> data) {
+    public void onLoadFinished(@NonNull  Loader<AsyncTaskResult<ArrayList<TmdbData.Video>>> loader,
+                               AsyncTaskResult<ArrayList<TmdbData.Video>> data) {
         // Hide loading indicator
         mLoadingIndicator.setVisibility(View.INVISIBLE);
 
@@ -177,7 +199,7 @@ public class MovieVideoFragment extends Fragment
     }
 
     @Override
-    public void onLoaderReset(@NonNull  Loader<AsyncTaskResult<List<TmdbData.Video>>> loader) {
+    public void onLoaderReset(@NonNull  Loader<AsyncTaskResult<ArrayList<TmdbData.Video>>> loader) {
         // Not used
     }
 
@@ -244,10 +266,10 @@ public class MovieVideoFragment extends Fragment
      * Video list AsyncTaskLoader implementation
      */
     public static class TmdbMovieVideoLoader
-            extends AsyncTaskLoader<AsyncTaskResult<List<TmdbData.Video>>> {
+            extends AsyncTaskLoader<AsyncTaskResult<ArrayList<TmdbData.Video>>> {
 
         final PackageManager mPackageManager;
-        AsyncTaskResult<List<TmdbData.Video>> mResult;
+        AsyncTaskResult<ArrayList<TmdbData.Video>> mResult;
         final Bundle mArgs;
 
         private TmdbMovieVideoLoader(Context context, Bundle args) {
@@ -271,7 +293,7 @@ public class MovieVideoFragment extends Fragment
         protected void onStopLoading() { cancelLoad(); }
 
         @Override
-        public AsyncTaskResult<List<TmdbData.Video>> loadInBackground() {
+        public AsyncTaskResult<ArrayList<TmdbData.Video>> loadInBackground() {
             // Get movie id
             int movieId = mArgs.getInt(LOADER_BUNDLE_MOVIE_ID, 1);
 
@@ -284,7 +306,7 @@ public class MovieVideoFragment extends Fragment
                 // String jsonMovieVideos = MockDataUtils.getMockJson(getContext(), "mock_videos");
 
                 // Use only videos of type "Trailer"
-                TmdbJsonUtils.TmdbJsonResult<List<TmdbData.Video>> videoResult =
+                TmdbJsonUtils.TmdbJsonResult<ArrayList<TmdbData.Video>> videoResult =
                         TmdbJsonUtils.getVideoListFromJson(jsonMovieVideos, TmdbData.Video.TYPE_TRAILER);
 
                 mResult = new AsyncTaskResult<>(videoResult.getResult(), videoResult.getException());

@@ -14,10 +14,6 @@ public class PopularMoviesApplication extends Application {
         // Initialize Stetho
         Stetho.initializeWithDefaults(this);
 
-        // Enable Stetho network inspection
-        new OkHttpClient.Builder()
-                .addNetworkInterceptor(new StethoInterceptor())
-                .build();
     }
 
 }

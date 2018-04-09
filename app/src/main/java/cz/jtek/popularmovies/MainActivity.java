@@ -21,6 +21,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
@@ -43,7 +44,6 @@ import android.widget.TextView;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
 import cz.jtek.popularmovies.data.MovieContract;
 import cz.jtek.popularmovies.data.MovieContract.MovieEntry;
@@ -60,13 +60,17 @@ public class MainActivity
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private TmdbData.Config mTmdbConfig;
-    private List<TmdbData.Movie> mTmdbMovieList;
+    private ArrayList<TmdbData.Movie> mTmdbMovieList;
 
     private RecyclerView mRecyclerView;
     private TextView mErrorMessage;
     private ProgressBar mLoadingIndicator;
 
     private Context mContext;
+
+    // Layout Manager
+    private GridLayoutManager mLayoutManager;
+    private Parcelable mLayoutManagerSaveState;
 
     // Grid Adapter
     private static final int DEFAULT_GRID_COLUMNS = 3;
@@ -77,7 +81,8 @@ public class MainActivity
 
     // Shared preferences
     private static final String PREF_KEY_SORT_ORDER = "pref_key_sort_order_list";
-    private static boolean prefsUpdatedFlag = false;
+    private static boolean sPrefsUpdatedFlag = false;
+    private static int REQUEST_CODE_PREFS = 1;
 
     // AsyncLoader
     private static final int LOADER_ID_CONFIG     = 0;
@@ -87,10 +92,19 @@ public class MainActivity
     private static final String LOADER_BUNDLE_KEY_SORT_ORDER = "sort-order";
     private int mApiResultsPageToLoad = 1;
 
+    // Instance State bundle keys
+    private static final String KEY_CONFIG = "config";
+    private static final String KEY_MOVIE_LIST = "movie-list";
+    private static final String KEY_LAYOUT_STATE = "layout-state";
+    private static final String KEY_PREFS_UPDATED = "prefs-updated";
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Log.d(TAG, "onCreate: ");
 
         mRecyclerView = findViewById(R.id.recyclerview_movies);
         mErrorMessage = findViewById(R.id.tv_error_message);
@@ -130,28 +144,42 @@ public class MainActivity
         String prefSortOrder = sp.getString(PREF_KEY_SORT_ORDER, defaultSortOrder);
 
         // Layout
-        GridLayoutManager layoutManager = new GridLayoutManager(this, gridColumns);
-        mRecyclerView.setLayoutManager(layoutManager);
+        mLayoutManager = new GridLayoutManager(this, gridColumns);
+        mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.setHasFixedSize(true);
 
         // Sending preferred image size to grid adapter
         mMovieGridAdapter = new MovieGridAdapter(this, this, optimalWidth, optimalHeight);
         mRecyclerView.setAdapter(mMovieGridAdapter);
 
-        // Start loaders depending on sort type preference
-        if (prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_favorite))) {
-            getSupportLoaderManager().initLoader(LOADER_ID_CURSOR, null, favoriteLoaderListener);
+        if (savedInstanceState != null) {
+            // Retrieving prefs updated flag
+            sPrefsUpdatedFlag = savedInstanceState.getBoolean(KEY_PREFS_UPDATED);
+
+            // Retrieving Config and movie list from saved instance state
+            mTmdbConfig = savedInstanceState.getParcelable(KEY_CONFIG);
+            mTmdbMovieList = savedInstanceState.getParcelableArrayList(KEY_MOVIE_LIST);
+
+            mMovieGridAdapter.setMovieData(mTmdbMovieList);
+            showMovieDataView();
         }
-        else if (prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_most_popular)) ||
-                    prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_top_rated))) {
-            // Check for network availability
-            if (!NetworkUtils.isNetworkAvailable(this)) {
-                // Network is not available
-                showErrorMessage(getResources().getString(R.string.error_msg_no_network));
+        else {
+            // Using loaders to obtain config and movie list
+            // Select loaders depending on sort type preference
+            if (prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_favorite))) {
+                getSupportLoaderManager().initLoader(LOADER_ID_CURSOR, null, favoriteLoaderListener);
             }
-            else {
-                // Initialize config loader (which in turn runs movie list loader)
-                getSupportLoaderManager().initLoader(LOADER_ID_CONFIG, null, configLoaderListener);
+            else if (prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_most_popular)) ||
+                    prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_top_rated))) {
+                // Check for network availability
+                if (!NetworkUtils.isNetworkAvailable(this)) {
+                    // Network is not available
+                    showErrorMessage(getResources().getString(R.string.error_msg_no_network));
+                }
+                else {
+                    // Initialize config loader (which in turn runs movie list loader)
+                    getSupportLoaderManager().initLoader(LOADER_ID_CONFIG, null, configLoaderListener);
+                }
             }
         }
     }
@@ -164,7 +192,19 @@ public class MainActivity
      */
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        prefsUpdatedFlag = true;
+        Log.d(TAG, "onSharedPreferenceChanged: ");
+        sPrefsUpdatedFlag = true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d(TAG, "onActivityResult: " + requestCode);
+        if (requestCode == REQUEST_CODE_PREFS) {
+            if (resultCode == RESULT_OK) {
+                boolean prefChanged = data.getBooleanExtra("pref-change", true);
+                Log.d(TAG, "onActivityResult: **** received " + prefChanged);
+            }
+        }
     }
 
     /**
@@ -174,9 +214,11 @@ public class MainActivity
     protected void onStart() {
         super.onStart();
 
-        if (prefsUpdatedFlag) {
+        Log.d(TAG, "onStart: " + sPrefsUpdatedFlag);
+
+        if (sPrefsUpdatedFlag) {
             // We are returning to this activity after preference change
-            prefsUpdatedFlag = false;
+            sPrefsUpdatedFlag = false;
 
             // Restart loading results from page 1
             mApiResultsPageToLoad = 1;
@@ -208,6 +250,46 @@ public class MainActivity
     }
 
     @Override
+    public void onResume() {
+        Log.d(TAG, "onResume: ");
+        super.onResume();
+
+        if (mLayoutManagerSaveState != null) {
+            // Restoring layout manager state (e.g. scroll position)
+            mLayoutManager.onRestoreInstanceState(mLayoutManagerSaveState);
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        // Store Config
+        outState.putParcelable(KEY_CONFIG, mTmdbConfig);
+
+        // Store movie list
+        outState.putParcelableArrayList(KEY_MOVIE_LIST, mTmdbMovieList);
+
+        // Store recycler view state
+        mLayoutManagerSaveState = mLayoutManager.onSaveInstanceState();
+        outState.putParcelable(KEY_LAYOUT_STATE, mLayoutManagerSaveState);
+
+        // Store prefs updated flag
+        outState.putBoolean(KEY_PREFS_UPDATED, sPrefsUpdatedFlag);
+
+        // Calling superclass to save state
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        // Config and movie list are retrieved in onCreate method
+
+        // Retrieve recycler view state
+        mLayoutManagerSaveState = savedInstanceState.getParcelable(KEY_LAYOUT_STATE);
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         // Unregister this activity as shared preference change listener
@@ -229,7 +311,7 @@ public class MainActivity
 
         if (R.id.action_settings == itemId) {
             Intent startSettingsActivity = new Intent(this, SettingsActivity.class);
-            startActivity(startSettingsActivity);
+            startActivityForResult(startSettingsActivity, REQUEST_CODE_PREFS);
             return true;
         }
 
@@ -331,19 +413,19 @@ public class MainActivity
     /**
      * Loader callbacks for movie list loader
      */
-    private LoaderManager.LoaderCallbacks<AsyncTaskResult<List<TmdbData.Movie>>> movieListLoaderListener =
-            new LoaderManager.LoaderCallbacks<AsyncTaskResult<List<TmdbData.Movie>>>() {
+    private LoaderManager.LoaderCallbacks<AsyncTaskResult<ArrayList<TmdbData.Movie>>> movieListLoaderListener =
+            new LoaderManager.LoaderCallbacks<AsyncTaskResult<ArrayList<TmdbData.Movie>>>() {
 
                 @NonNull
                 @Override
-                public Loader<AsyncTaskResult<List<TmdbData.Movie>>> onCreateLoader(int id, @Nullable Bundle args) {
+                public Loader<AsyncTaskResult<ArrayList<TmdbData.Movie>>> onCreateLoader(int id, @Nullable Bundle args) {
                     mLoadingIndicator.setVisibility(View.VISIBLE);
                     return new TmdbMovieListLoader(mContext, args);
                 }
 
                 @Override
-                public void onLoadFinished(@NonNull Loader<AsyncTaskResult<List<TmdbData.Movie>>> loader,
-                                           AsyncTaskResult<List<TmdbData.Movie>> data) {
+                public void onLoadFinished(@NonNull Loader<AsyncTaskResult<ArrayList<TmdbData.Movie>>> loader,
+                                           AsyncTaskResult<ArrayList<TmdbData.Movie>> data) {
 
                     mLoadingIndicator.setVisibility(View.INVISIBLE);
 
@@ -377,7 +459,7 @@ public class MainActivity
                 }
 
                 @Override
-                public void onLoaderReset(@NonNull Loader<AsyncTaskResult<List<TmdbData.Movie>>> loader) {
+                public void onLoaderReset(@NonNull Loader<AsyncTaskResult<ArrayList<TmdbData.Movie>>> loader) {
                     // Not used
                 }
             };
@@ -435,10 +517,10 @@ public class MainActivity
      * TMDb API movie list async task loader implementation
      */
     public static class TmdbMovieListLoader
-            extends AsyncTaskLoader<AsyncTaskResult<List<TmdbData.Movie>>> {
+            extends AsyncTaskLoader<AsyncTaskResult<ArrayList<TmdbData.Movie>>> {
 
         final PackageManager mPackageManager;
-        AsyncTaskResult<List<TmdbData.Movie>> mResult;
+        AsyncTaskResult<ArrayList<TmdbData.Movie>> mResult;
         final Bundle mArgs;
 
         private TmdbMovieListLoader(Context context, Bundle args) {
@@ -473,7 +555,7 @@ public class MainActivity
          *         null if an error occurs
          */
         @Override
-        public AsyncTaskResult<List<TmdbData.Movie>> loadInBackground() {
+        public AsyncTaskResult<ArrayList<TmdbData.Movie>> loadInBackground() {
 
             // Get API results page to load from bundle
             int movieResultPage = mArgs.getInt(LOADER_BUNDLE_KEY_PAGE, 1);
@@ -492,7 +574,7 @@ public class MainActivity
                 URL movieUrl = NetworkUtils.buildMovieUrl(getContext(), sortOrder, movieResultPage);
                 String jsonMovies = NetworkUtils.getResponseFromHttpUrl(movieUrl);
 
-                TmdbJsonUtils.TmdbJsonResult<List<TmdbData.Movie>> movieResult =
+                TmdbJsonUtils.TmdbJsonResult<ArrayList<TmdbData.Movie>> movieResult =
                         TmdbJsonUtils.getMovieListFromJson(jsonMovies);
                 mResult = new AsyncTaskResult<>(movieResult.getResult(), movieResult.getException());
             } catch (IOException iex) {
@@ -538,6 +620,8 @@ public class MainActivity
 
         @Override
         public AsyncTaskResult<TmdbData.Config> loadInBackground() {
+            Log.d(TAG, "loadInBackground: ***** CONFIG loader loading");
+
             try {
                 // Example mock request used for debugging to avoid sending network queries
                 // String jsonConfig = MockDataUtils.getMockJson(getContext(), "mock_configuration");

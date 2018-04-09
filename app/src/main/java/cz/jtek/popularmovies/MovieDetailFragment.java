@@ -62,6 +62,10 @@ public class MovieDetailFragment extends Fragment {
     private static final int LOADER_ID_FAVORITE_ITEM = 12;
     private static final String LOADER_BUNDLE_MOVIE_ID = "movie-id";
 
+    // Instance State bundle keys
+    private static final String KEY_MOVIE = "movie";
+    private static final String KEY_FAVORITE = "favorite";
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -80,62 +84,70 @@ public class MovieDetailFragment extends Fragment {
         mFavoriteToggle  = view.findViewById(R.id.tb_favorite);
         mFavoriteToggle.setOnCheckedChangeListener(onFavoriteToggleClick);
 
-        Bundle args = getArguments();
-
-        if (args != null) {
-            if (args.containsKey(MainActivity.EXTRA_MOVIE)) {
-
+        if (savedInstanceState != null) {
+            // Restore movie object
+            mMovie = savedInstanceState.getParcelable(KEY_MOVIE);
+        }
+        else {
+            // Get movie object from arguments
+            Bundle args = getArguments();
+            if (args != null && args.containsKey(MainActivity.EXTRA_MOVIE)) {
                 mMovie = args.getParcelable(MainActivity.EXTRA_MOVIE);
-
-                if (mMovie != null) {
-
-                    // Movie title
-                    TextView titleTextView = view.findViewById(R.id.tv_detail_title);
-                    titleTextView.setText(mMovie.getTitle());
-
-                    // Poster
-                    ImageView posterImageView = view.findViewById(R.id.iv_detail_poster);
-                    Picasso.with(mContext)
-                            .load(mMovie.getPosterPath())
-                            .into(posterImageView);
-
-                    // Vote average
-                    TextView voteAverageTextView = view.findViewById(R.id.tv_detail_vote_average);
-                    voteAverageTextView.setText(String.format(Locale.getDefault(),"%.1f", mMovie.getVoteAverage()));
-
-                    // Release date
-                    TextView releaseTextView = view.findViewById(R.id.tv_detail_release_date);
-
-                    String releaseDateString = mMovie.getReleaseDate();
-
-                    DateFormat dateFormatAPI = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-                    DateFormat dateFormatOutput = DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault());
-
-                    try {
-                        Date releaseDate = dateFormatAPI.parse(releaseDateString);
-                        releaseTextView.setText(dateFormatOutput.format(releaseDate));
-                    } catch (ParseException pe) {
-                        Log.e(TAG, "Release date parse exception.");
-                    }
-
-                    // Overview
-                    TextView overviewTextView = view.findViewById(R.id.tv_detail_overview);
-
-                    String overview = mMovie.getOverview();
-                    SpannableString overviewSpannable = new SpannableString(overview);
-                    overviewSpannable.setSpan(new LeadingMarginSpan.Standard(24, 0),0, overview.length(),0);
-
-                    overviewTextView.setText(overviewSpannable);
-
-                    // Start favorite status loader
-                    Bundle loaderArgsBundle = new Bundle();
-                    loaderArgsBundle.putInt(LOADER_BUNDLE_MOVIE_ID, mMovie.getId());
-                    // Loader initialization
-                    getLoaderManager().initLoader(LOADER_ID_FAVORITE_ITEM, loaderArgsBundle, favoriteItemLoaderListener);
-
-                }
             }
         }
+
+        if (mMovie != null) {
+            // Movie title
+            TextView titleTextView = view.findViewById(R.id.tv_detail_title);
+            titleTextView.setText(mMovie.getTitle());
+
+            // Poster
+            ImageView posterImageView = view.findViewById(R.id.iv_detail_poster);
+            Picasso.with(mContext)
+                    .load(mMovie.getPosterPath())
+                    .into(posterImageView);
+
+            // Vote average
+            TextView voteAverageTextView = view.findViewById(R.id.tv_detail_vote_average);
+            voteAverageTextView.setText(String.format(Locale.getDefault(), "%.1f", mMovie.getVoteAverage()));
+
+            // Release date
+            TextView releaseTextView = view.findViewById(R.id.tv_detail_release_date);
+
+            String releaseDateString = mMovie.getReleaseDate();
+
+            DateFormat dateFormatAPI = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+            DateFormat dateFormatOutput = DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault());
+
+            try {
+                Date releaseDate = dateFormatAPI.parse(releaseDateString);
+                releaseTextView.setText(dateFormatOutput.format(releaseDate));
+            } catch (ParseException pe) {
+                Log.e(TAG, "Release date parse exception.");
+            }
+
+            // Overview
+            TextView overviewTextView = view.findViewById(R.id.tv_detail_overview);
+
+            String overview = mMovie.getOverview();
+            SpannableString overviewSpannable = new SpannableString(overview);
+            overviewSpannable.setSpan(new LeadingMarginSpan.Standard(24, 0), 0, overview.length(), 0);
+
+            overviewTextView.setText(overviewSpannable);
+
+            if (savedInstanceState != null) {
+                // Restore favorite toggle state
+                mFavoriteToggle.setChecked(savedInstanceState.getBoolean(KEY_FAVORITE));
+            }
+            else {
+                // Start favorite status loader
+                Bundle loaderArgsBundle = new Bundle();
+                loaderArgsBundle.putInt(LOADER_BUNDLE_MOVIE_ID, mMovie.getId());
+                // Loader initialization
+                getLoaderManager().initLoader(LOADER_ID_FAVORITE_ITEM, loaderArgsBundle, favoriteItemLoaderListener);
+            }
+        }
+
         return(view);
     }
 
@@ -150,6 +162,16 @@ public class MovieDetailFragment extends Fragment {
                 }
             };
 
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        // Store movie
+        outState.putParcelable(KEY_MOVIE, mMovie);
+        // Store favorite toggle status
+        outState.putBoolean(KEY_FAVORITE, mFavoriteToggle.isChecked());
+
+        super.onSaveInstanceState(outState);
+    }
 
     /**
      * Store favorite status changes

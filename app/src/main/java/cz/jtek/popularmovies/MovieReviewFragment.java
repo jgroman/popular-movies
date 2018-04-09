@@ -41,7 +41,7 @@ public class MovieReviewFragment extends Fragment
 
     private Context mContext;
 
-    List<TmdbData.Review> mReviewList;
+    ArrayList<TmdbData.Review> mReviewList;
     ReviewListItemAdapter mReviewListItemAdapter;
 
     private ListView mReviewListView;
@@ -53,6 +53,9 @@ public class MovieReviewFragment extends Fragment
     // AsyncLoader
     private static final int LOADER_ID_REVIEW_LIST = 33;
     private static final String LOADER_BUNDLE_MOVIE_ID = "movie-id";
+
+    // Saved instance state bundle keys
+    private static final String KEY_REVIEW_LIST = "review-list";
 
     @Nullable
     @Override
@@ -75,37 +78,48 @@ public class MovieReviewFragment extends Fragment
         // Obtain view width for list height calculation
         mViewWidth = UIUtils.getDisplayWidth(mContext);
 
+        mErrorMessage = view.findViewById(R.id.tv_review_error_message);
+        mLoadingIndicator = view.findViewById(R.id.pb_review_loading);
+
+        if (savedInstanceState != null) {
+            // Restoring review list from saved instance state
+            mReviewList = savedInstanceState.getParcelableArrayList(KEY_REVIEW_LIST);
+        }
+        else {
+            mReviewList = new ArrayList<>();
+        }
+
         // Review ListView
-        mReviewList = new ArrayList<>();
         mReviewListItemAdapter = new ReviewListItemAdapter(mContext, R.layout.item_movie_review, mReviewList);
         mReviewListView = view.findViewById(R.id.lv_detail_reviews);
         mReviewListView.setAdapter(mReviewListItemAdapter);
         mReviewListView.setOnItemClickListener(this);
         UIUtils.showListViewFullHeight(mReviewListView, mViewWidth);
 
-        mErrorMessage = view.findViewById(R.id.tv_review_error_message);
-        mLoadingIndicator = view.findViewById(R.id.pb_review_loading);
+        if (savedInstanceState == null) {
+            // If not restoring from saved instance state, start review list loader
 
-        int movieId = 0;
-        Bundle args = getArguments();
+            int movieId = 0;
+            Bundle args = getArguments();
 
-        if (args != null) {
-            if (args.containsKey(MovieDetailActivity.BUNDLE_MOVIE_ID)) {
-                // Obtain movie ID from fragment arguments
-                movieId = args.getInt(MovieDetailActivity.BUNDLE_MOVIE_ID);
+            if (args != null) {
+                if (args.containsKey(MovieDetailActivity.BUNDLE_MOVIE_ID)) {
+                    // Obtain movie ID from fragment arguments
+                    movieId = args.getInt(MovieDetailActivity.BUNDLE_MOVIE_ID);
+                }
             }
-        }
 
-        // Check for network availability
-        if (NetworkUtils.isNetworkAvailable(mContext)) {
-            // Store movie id into loader args bundle
-            Bundle loaderArgsBundle = new Bundle();
-            loaderArgsBundle.putInt(LOADER_BUNDLE_MOVIE_ID, movieId);
-            // Loader initialization
-            getLoaderManager().initLoader(LOADER_ID_REVIEW_LIST, loaderArgsBundle, reviewLoaderListener);
-        } else {
-            // Network is not available
-            showErrorMessage(getResources().getString(R.string.error_msg_no_network));
+            // Check for network availability
+            if (NetworkUtils.isNetworkAvailable(mContext)) {
+                // Store movie id into loader args bundle
+                Bundle loaderArgsBundle = new Bundle();
+                loaderArgsBundle.putInt(LOADER_BUNDLE_MOVIE_ID, movieId);
+                // Loader initialization
+                getLoaderManager().initLoader(LOADER_ID_REVIEW_LIST, loaderArgsBundle, reviewLoaderListener);
+            } else {
+                // Network is not available
+                showErrorMessage(getResources().getString(R.string.error_msg_no_network));
+            }
         }
 
         return(view);
@@ -113,6 +127,9 @@ public class MovieReviewFragment extends Fragment
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
+        // Store review list
+        outState.putParcelableArrayList(KEY_REVIEW_LIST, mReviewList);
+
         super.onSaveInstanceState(outState);
     }
     
@@ -144,20 +161,20 @@ public class MovieReviewFragment extends Fragment
     /**
      * Loader callbacks for review loader
      */
-    LoaderManager.LoaderCallbacks<AsyncTaskResult<List<TmdbData.Review>>> reviewLoaderListener =
-            new LoaderManager.LoaderCallbacks<AsyncTaskResult<List<TmdbData.Review>>>() {
+    LoaderManager.LoaderCallbacks<AsyncTaskResult<ArrayList<TmdbData.Review>>> reviewLoaderListener =
+            new LoaderManager.LoaderCallbacks<AsyncTaskResult<ArrayList<TmdbData.Review>>>() {
 
                 @NonNull
                 @Override
-                public Loader<AsyncTaskResult<List<TmdbData.Review>>> onCreateLoader(int id, @Nullable Bundle args) {
+                public Loader<AsyncTaskResult<ArrayList<TmdbData.Review>>> onCreateLoader(int id, @Nullable Bundle args) {
                     // Show loading indicator
                     mLoadingIndicator.setVisibility(View.VISIBLE);
                     return new MovieReviewFragment.TmdbMovieReviewLoader(mContext, args);
                 }
 
                 @Override
-                public void onLoadFinished(@NonNull Loader<AsyncTaskResult<List<TmdbData.Review>>> loader,
-                                           AsyncTaskResult<List<TmdbData.Review>> data) {
+                public void onLoadFinished(@NonNull Loader<AsyncTaskResult<ArrayList<TmdbData.Review>>> loader,
+                                           AsyncTaskResult<ArrayList<TmdbData.Review>> data) {
                     // Hide loading indicator
                     mLoadingIndicator.setVisibility(View.INVISIBLE);
 
@@ -183,7 +200,7 @@ public class MovieReviewFragment extends Fragment
                 }
 
                 @Override
-                public void onLoaderReset(@NonNull Loader<NetworkUtils.AsyncTaskResult<List<TmdbData.Review>>> loader) {
+                public void onLoaderReset(@NonNull Loader<NetworkUtils.AsyncTaskResult<ArrayList<TmdbData.Review>>> loader) {
                     // Not used
                 }
             };
@@ -255,10 +272,10 @@ public class MovieReviewFragment extends Fragment
      * Review list AsyncTaskLoader implementation
      */
     public static class TmdbMovieReviewLoader
-            extends AsyncTaskLoader<NetworkUtils.AsyncTaskResult<List<TmdbData.Review>>> {
+            extends AsyncTaskLoader<NetworkUtils.AsyncTaskResult<ArrayList<TmdbData.Review>>> {
 
         final PackageManager mPackageManager;
-        AsyncTaskResult<List<TmdbData.Review>> mResult;
+        AsyncTaskResult<ArrayList<TmdbData.Review>> mResult;
         final Bundle mArgs;
 
         private TmdbMovieReviewLoader(Context context, Bundle args) {
@@ -282,7 +299,7 @@ public class MovieReviewFragment extends Fragment
         protected void onStopLoading() { cancelLoad(); }
 
         @Override
-        public AsyncTaskResult<List<TmdbData.Review>> loadInBackground() {
+        public AsyncTaskResult<ArrayList<TmdbData.Review>> loadInBackground() {
             // Get movie id from argument bundle
             int movieId = mArgs.getInt(LOADER_BUNDLE_MOVIE_ID, 1);
 
@@ -295,7 +312,7 @@ public class MovieReviewFragment extends Fragment
                 // String jsonMovieReviews = MockDataUtils.getMockJson(getContext(), "mock_reviews");
 
                 // Use only videos of type "Trailer"
-                TmdbJsonUtils.TmdbJsonResult<List<TmdbData.Review>> reviewResult =
+                TmdbJsonUtils.TmdbJsonResult<ArrayList<TmdbData.Review>> reviewResult =
                         TmdbJsonUtils.getReviewListFromJson(jsonMovieReviews);
 
                 mResult = new AsyncTaskResult<>(reviewResult.getResult(), reviewResult.getException());
