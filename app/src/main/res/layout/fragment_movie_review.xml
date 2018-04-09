@@ -28,9 +28,9 @@
         android:id="@+id/tv_review_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
+        android:padding="@dimen/review_header_padding"
         android:gravity="center_horizontal"
-        android:textSize="20sp"
+        android:textSize="@dimen/review_header_text_size"
         android:textStyle="bold"
         android:textColor="@color/black"
         android:text="@string/detail_movie_reviews"
@@ -57,20 +57,25 @@
         android:text="@string/error_message"
         android:visibility="invisible"
         android:gravity="center"
-        android:textSize="24sp"
+        android:textSize="@dimen/review_error_text_size"
         android:textColor="@color/red"
         />
 
     <!-- Loading indicator -->
-    <ProgressBar
-        android:id="@+id/pb_review_loading"
-        android:layout_width="42dp"
-        android:layout_height="42dp"
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_below="@id/tv_review_header"
-        android:layout_gravity="center"
-        android:indeterminate="true"
-        android:visibility="invisible"
-        />
-
+        >
+        <ProgressBar
+            android:id="@+id/pb_review_loading"
+            style="@android:style/Widget.ProgressBar.Large"
+            android:layout_width="@dimen/review_progress_bar_width"
+            android:layout_height="@dimen/review_progress_bar_height"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            android:visibility="invisible"
+            />
+    </FrameLayout>
 
 </RelativeLayout>

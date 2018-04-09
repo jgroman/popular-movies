@@ -28,6 +28,7 @@
         android:id="@+id/tv_review_item_author"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textStyle="bold"
         />
 
     <TextView
