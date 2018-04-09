@@ -2,7 +2,7 @@
 
 An educational Android app for learning Android programming concepts.
 
-Udacity Nanodegree project, Stage 1
+Udacity Nanodegree project
 
 ## Important note regarding TMDb API token  
 Since it is illegal to publicly share personal TMDb API token, said token is stored externally
