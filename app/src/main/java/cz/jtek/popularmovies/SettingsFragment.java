@@ -101,15 +101,7 @@ public class SettingsFragment
         // Unregister Preference change listener
         getPreferenceScreen().getSharedPreferences()
                 .unregisterOnSharedPreferenceChangeListener(this);
-
-        Log.d(TAG, "onPause: ");
-
-        Intent intent = new Intent();
-        intent.putExtra("pref-change", true);
-        getActivity().setResult(RESULT_OK, intent);
-
-        getActivity().finish();
-    }
+        }
 
     /**
      * Shared preference change listener. Changed preference gets its summary updated.

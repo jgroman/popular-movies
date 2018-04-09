@@ -81,8 +81,8 @@ public class MainActivity
 
     // Shared preferences
     private static final String PREF_KEY_SORT_ORDER = "pref_key_sort_order_list";
+    private String mPrefSortOrder;
     private static boolean sPrefsUpdatedFlag = false;
-    private static int REQUEST_CODE_PREFS = 1;
 
     // AsyncLoader
     private static final int LOADER_ID_CONFIG     = 0;
@@ -96,8 +96,7 @@ public class MainActivity
     private static final String KEY_CONFIG = "config";
     private static final String KEY_MOVIE_LIST = "movie-list";
     private static final String KEY_LAYOUT_STATE = "layout-state";
-    private static final String KEY_PREFS_UPDATED = "prefs-updated";
-
+    private static final String KEY_PREF_SORT_ORDER  = "sort-order";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,7 +140,7 @@ public class MainActivity
 
         // Obtain current sort order from shared preferences
         String defaultSortOrder = getResources().getString(R.string.pref_sort_order_top_rated);
-        String prefSortOrder = sp.getString(PREF_KEY_SORT_ORDER, defaultSortOrder);
+        mPrefSortOrder = sp.getString(PREF_KEY_SORT_ORDER, defaultSortOrder);
 
         // Layout
         mLayoutManager = new GridLayoutManager(this, gridColumns);
@@ -153,8 +152,13 @@ public class MainActivity
         mRecyclerView.setAdapter(mMovieGridAdapter);
 
         if (savedInstanceState != null) {
-            // Retrieving prefs updated flag
-            sPrefsUpdatedFlag = savedInstanceState.getBoolean(KEY_PREFS_UPDATED);
+            // Retrieving original sort order
+            // In very low memory conditions it might have been changed without
+            // triggering this activity change listener (as it could have been destroyed)
+            String originalSortOrder = savedInstanceState.getString(KEY_PREF_SORT_ORDER);
+            if (!mPrefSortOrder.equals(originalSortOrder)) {
+                sPrefsUpdatedFlag = true;
+            }
 
             // Retrieving Config and movie list from saved instance state
             mTmdbConfig = savedInstanceState.getParcelable(KEY_CONFIG);
@@ -166,11 +170,11 @@ public class MainActivity
         else {
             // Using loaders to obtain config and movie list
             // Select loaders depending on sort type preference
-            if (prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_favorite))) {
+            if (mPrefSortOrder.equals(getResources().getString(R.string.pref_sort_order_favorite))) {
                 getSupportLoaderManager().initLoader(LOADER_ID_CURSOR, null, favoriteLoaderListener);
             }
-            else if (prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_most_popular)) ||
-                    prefSortOrder.equals(getResources().getString(R.string.pref_sort_order_top_rated))) {
+            else if (mPrefSortOrder.equals(getResources().getString(R.string.pref_sort_order_most_popular)) ||
+                        mPrefSortOrder.equals(getResources().getString(R.string.pref_sort_order_top_rated))) {
                 // Check for network availability
                 if (!NetworkUtils.isNetworkAvailable(this)) {
                     // Network is not available
@@ -188,23 +192,12 @@ public class MainActivity
      * Shared preference change listener. On preference change sets global flag.
      *
      * @param sharedPreferences Shared preferences
-     * @param s                       Unused string parameter
+     * @param key                    Changed preference key
      */
     @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         Log.d(TAG, "onSharedPreferenceChanged: ");
         sPrefsUpdatedFlag = true;
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.d(TAG, "onActivityResult: " + requestCode);
-        if (requestCode == REQUEST_CODE_PREFS) {
-            if (resultCode == RESULT_OK) {
-                boolean prefChanged = data.getBooleanExtra("pref-change", true);
-                Log.d(TAG, "onActivityResult: **** received " + prefChanged);
-            }
-        }
     }
 
     /**
@@ -272,8 +265,11 @@ public class MainActivity
         mLayoutManagerSaveState = mLayoutManager.onSaveInstanceState();
         outState.putParcelable(KEY_LAYOUT_STATE, mLayoutManagerSaveState);
 
-        // Store prefs updated flag
-        outState.putBoolean(KEY_PREFS_UPDATED, sPrefsUpdatedFlag);
+        // Store current sort order
+        // In very low memory conditions MainActivity might get destroyed when
+        // SettingsActivity is opened  and  shared preference listener will not work
+        // This is used for detecting change against live shared preferences
+        outState.putString(KEY_PREF_SORT_ORDER, mPrefSortOrder);
 
         // Calling superclass to save state
         super.onSaveInstanceState(outState);
@@ -311,7 +307,7 @@ public class MainActivity
 
         if (R.id.action_settings == itemId) {
             Intent startSettingsActivity = new Intent(this, SettingsActivity.class);
-            startActivityForResult(startSettingsActivity, REQUEST_CODE_PREFS);
+            startActivity(startSettingsActivity);
             return true;
         }
 
