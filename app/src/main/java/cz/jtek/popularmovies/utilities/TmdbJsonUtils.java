@@ -32,6 +32,7 @@ import cz.jtek.popularmovies.TmdbData;
  */
 public class TmdbJsonUtils {
 
+    @SuppressWarnings("unused")
     private static final String TAG = TmdbJsonUtils.class.getSimpleName();
 
     /**
@@ -54,7 +55,7 @@ public class TmdbJsonUtils {
         public Exception getException() { return exception; }
 
         // Checks whether instance contains an exception
-        public boolean hasException() { return exception != null; }
+        //public boolean hasException() { return exception != null; }
     }
 
     /**
@@ -64,7 +65,7 @@ public class TmdbJsonUtils {
      */
     public static  TmdbJsonResult<TmdbData.Config> getConfigFromJson(String tmdbConfigJsonString) {
 
-        TmdbData.Config config = null;
+        TmdbData.Config config;
 
         try {
             JSONObject configJson = new JSONObject(tmdbConfigJsonString);
@@ -89,9 +90,11 @@ public class TmdbJsonUtils {
     }
 
     /**
+     * Parses TMDb API /movie reply
      *
-     * @param tmdbMovieJsonString
-     * @return
+     * @param tmdbMovieJsonString   API JSON response string
+     *
+     * @return TmdbJsonResult object with either list of Tmdb.Movie objects or exception
      */
     public static TmdbJsonResult<List<TmdbData.Movie>> getMovieListFromJson(String tmdbMovieJsonString) {
 

@@ -28,6 +28,7 @@ import java.io.InputStream;
  */
 public class MockDataUtils {
 
+    @SuppressWarnings("unused")
     private static final String TAG = MockDataUtils.class.getSimpleName();
 
     /**
@@ -35,9 +36,8 @@ public class MockDataUtils {
      *
      * @param inputStream    Input stream
      * @return File contents
-     * @throws IOException   IOException
      */
-    private static String readFile(InputStream inputStream) throws IOException {
+    private static String readFile(InputStream inputStream) {
         StringBuilder sb = new StringBuilder();
         int readLen;
 
@@ -64,9 +64,9 @@ public class MockDataUtils {
      * @param context    Current context
      * @param fileName Name of file to read
      * @return File contents
-     * @throws IOException  IOException
      */
-    public static String getMockJson(Context context, String fileName) throws IOException {
+    @SuppressWarnings("unused")
+    public static String getMockJson(Context context, String fileName) {
         InputStream inputStream = context.getResources().openRawResource(
                 context.getResources().getIdentifier(fileName, "raw", context.getPackageName())
         );

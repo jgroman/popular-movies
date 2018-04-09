@@ -41,12 +41,12 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import cz.jtek.popularmovies.data.MovieContract;
 import cz.jtek.popularmovies.data.MovieContract.MovieEntry;
-import cz.jtek.popularmovies.utilities.MockDataUtils;
 import cz.jtek.popularmovies.utilities.NetworkUtils;
 import cz.jtek.popularmovies.utilities.NetworkUtils.AsyncTaskResult;
 import cz.jtek.popularmovies.utilities.TmdbJsonUtils;
@@ -71,11 +71,9 @@ public class MainActivity
     // Grid Adapter
     private static final int DEFAULT_GRID_COLUMNS = 3;
     private MovieGridAdapter mMovieGridAdapter;
-    private int mOptimalWidth, mOptimalHeight;
 
     // Movie detail activity extras
     public static final String EXTRA_MOVIE = "movie";
-    public static final String EXTRA_CONFIG = "config";
 
     // Shared preferences
     private static final String PREF_KEY_SORT_ORDER = "pref_key_sort_order_list";
@@ -83,7 +81,7 @@ public class MainActivity
 
     // AsyncLoader
     private static final int LOADER_ID_CONFIG     = 0;
-    private static final int LOADER_ID_MOVIELIST = 1;
+    private static final int LOADER_ID_MOVIE_LIST = 1;
     private static final int LOADER_ID_CURSOR     = 2;
     private static final String LOADER_BUNDLE_KEY_PAGE = "page";
     private static final String LOADER_BUNDLE_KEY_SORT_ORDER = "sort-order";
@@ -104,8 +102,8 @@ public class MainActivity
         int displayWidth = UIUtils.getDisplayWidth(this);
 
         int gridColumns = DEFAULT_GRID_COLUMNS;
-        mOptimalWidth = TmdbData.Config.getPosterWidth();
-        mOptimalHeight = TmdbData.Config.getPosterHeight();
+        int optimalWidth = TmdbData.Config.getPosterWidth();
+        int optimalHeight = TmdbData.Config.getPosterHeight();
 
         if (displayWidth > 0) {
             // Number of columns which fits into current display width
@@ -116,11 +114,11 @@ public class MainActivity
             }
 
             // Optimal column width to fill all available space
-            mOptimalWidth = displayWidth / gridColumns;
+            optimalWidth = displayWidth / gridColumns;
             // Factor to resize original image with
-            double resizeFactor = (double) mOptimalWidth / (double) TmdbData.Config.getPosterWidth();
+            double resizeFactor = (double) optimalWidth / (double) TmdbData.Config.getPosterWidth();
             // Resized image height
-            mOptimalHeight = (int) ((double) TmdbData.Config.getPosterHeight() * resizeFactor);
+            optimalHeight = (int) ((double) TmdbData.Config.getPosterHeight() * resizeFactor);
         }
 
         // Shared Preferences and preference change listener
@@ -137,7 +135,7 @@ public class MainActivity
         mRecyclerView.setHasFixedSize(true);
 
         // Sending preferred image size to grid adapter
-        mMovieGridAdapter = new MovieGridAdapter(this, this, mOptimalWidth, mOptimalHeight);
+        mMovieGridAdapter = new MovieGridAdapter(this, this, optimalWidth, optimalHeight);
         mRecyclerView.setAdapter(mMovieGridAdapter);
 
         // Start loaders depending on sort type preference
@@ -317,7 +315,7 @@ public class MainActivity
                         String prefSortOrder = sp.getString(PREF_KEY_SORT_ORDER, defaultSortOrder);
                         loaderArgsBundle.putString(LOADER_BUNDLE_KEY_SORT_ORDER, prefSortOrder);
 
-                        getSupportLoaderManager().initLoader(LOADER_ID_MOVIELIST, loaderArgsBundle, movieListLoaderListener);
+                        getSupportLoaderManager().initLoader(LOADER_ID_MOVIE_LIST, loaderArgsBundle, movieListLoaderListener);
 
                         // Destroy this loader (otherwise is gets called twice for some reason)
                         getSupportLoaderManager().destroyLoader(LOADER_ID_CONFIG);
@@ -374,7 +372,7 @@ public class MainActivity
                         showMovieDataView();
 
                         // Destroy this loader (otherwise is gets called twice for some reason)
-                        getSupportLoaderManager().destroyLoader(LOADER_ID_MOVIELIST);
+                        getSupportLoaderManager().destroyLoader(LOADER_ID_MOVIE_LIST);
                     }
                 }
 
@@ -482,14 +480,17 @@ public class MainActivity
             // Get sort order from bundle
             String sortOrder = mArgs.getString(LOADER_BUNDLE_KEY_SORT_ORDER);
 
+            if (sortOrder == null) {
+                throw new IllegalArgumentException("Sort order cannot be null");
+            }
+
             try {
+                // Example mock request used for debugging to avoid sending network queries
+                // String jsonMovies = MockDataUtils.getMockJson(getContext(), "mock_popular");
 
                 // Load movie result page
-                // TODO URL movieUrl = NetworkUtils.buildMovieUrl(getContext(), sortOrder, movieResultPage);
-                // TODO String jsonMovies = NetworkUtils.getResponseFromHttpUrl(movieUrl);
-
-                // Example mock request used for debugging to avoid sending network queries
-                String jsonMovies = MockDataUtils.getMockJson(getContext(), "mock_popular");
+                URL movieUrl = NetworkUtils.buildMovieUrl(getContext(), sortOrder, movieResultPage);
+                String jsonMovies = NetworkUtils.getResponseFromHttpUrl(movieUrl);
 
                 TmdbJsonUtils.TmdbJsonResult<List<TmdbData.Movie>> movieResult =
                         TmdbJsonUtils.getMovieListFromJson(jsonMovies);
@@ -501,7 +502,6 @@ public class MainActivity
             }
             return mResult;
         }
-
     }
 
     /**
@@ -539,12 +539,12 @@ public class MainActivity
         @Override
         public AsyncTaskResult<TmdbData.Config> loadInBackground() {
             try {
-                // Load current API configuration
-                // TODO URL configUrl = NetworkUtils.buildConfigurationUrl();
-                // TODO String jsonConfig = NetworkUtils.getResponseFromHttpUrl(configUrl);
-
                 // Example mock request used for debugging to avoid sending network queries
-                String jsonConfig = MockDataUtils.getMockJson(getContext(), "mock_configuration");
+                // String jsonConfig = MockDataUtils.getMockJson(getContext(), "mock_configuration");
+
+                // Load current API configuration
+                URL configUrl = NetworkUtils.buildConfigurationUrl();
+                String jsonConfig = NetworkUtils.getResponseFromHttpUrl(configUrl);
 
                 TmdbJsonUtils.TmdbJsonResult<TmdbData.Config> configResult =
                         TmdbJsonUtils.getConfigFromJson(jsonConfig);

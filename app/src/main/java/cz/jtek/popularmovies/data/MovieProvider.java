@@ -29,6 +29,7 @@ import android.support.annotation.Nullable;
 
 public class MovieProvider extends ContentProvider {
 
+    @SuppressWarnings("unused")
     private static final String TAG = MovieProvider.class.getSimpleName();
 
     // Constant to be used to match URIs using the UriMatcher class
@@ -114,7 +115,7 @@ public class MovieProvider extends ContentProvider {
         Context context = getContext();
 
         if (context == null) {
-            throw new NullPointerException("Context cannot be null");
+            throw new IllegalArgumentException("Context cannot be null");
         }
 
         if (sUriMatcher.match(uri) != CODE_MOVIES) {
@@ -122,11 +123,11 @@ public class MovieProvider extends ContentProvider {
         }
 
         if (contentValues == null) {
-            throw new NullPointerException("ContentValues cannot be null");
+            throw new IllegalArgumentException("ContentValues cannot be null");
         }
 
         if (!contentValues.containsKey(MovieContract.MovieEntry.COL_MOVIE_ID)) {
-            throw new NullPointerException("ContentValues must contain key "  + MovieContract.MovieEntry.COL_MOVIE_ID);
+            throw new IllegalArgumentException("ContentValues must contain key "  + MovieContract.MovieEntry.COL_MOVIE_ID);
         }
 
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();

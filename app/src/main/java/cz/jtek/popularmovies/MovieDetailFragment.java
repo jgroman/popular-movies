@@ -52,6 +52,7 @@ import cz.jtek.popularmovies.data.MovieContract;
 
 public class MovieDetailFragment extends Fragment {
 
+    @SuppressWarnings("unused")
     private static final String TAG = MovieDetailFragment.class.getSimpleName();
 
     private Context mContext;

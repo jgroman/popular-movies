@@ -23,6 +23,7 @@ import android.support.v7.app.AppCompatActivity;
 
 public class MovieDetailActivity extends AppCompatActivity {
 
+    @SuppressWarnings("unused")
     private static final String TAG = MovieDetailActivity.class.getSimpleName();
 
     public static final String BUNDLE_MOVIE_ID = "movie-id";

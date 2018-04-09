@@ -17,10 +17,8 @@
 package cz.jtek.popularmovies;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,11 +28,10 @@ import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
-import cz.jtek.popularmovies.data.MovieContract;
-
 public class MovieGridAdapter
         extends RecyclerView.Adapter<MovieGridAdapter.MovieGridAdapterViewHolder> {
 
+    @SuppressWarnings("unused")
     private static final String TAG = MovieGridAdapter.class.getSimpleName();
 
     public interface MovieGridOnClickHandler {

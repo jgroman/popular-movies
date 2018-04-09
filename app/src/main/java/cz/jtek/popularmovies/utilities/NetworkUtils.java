@@ -24,11 +24,13 @@ import android.content.pm.ResolveInfo;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -91,7 +93,7 @@ public final class NetworkUtils {
             return tmdbConfigUrl;
         } catch (MalformedURLException e) {
             e.printStackTrace();
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
@@ -99,21 +101,22 @@ public final class NetworkUtils {
      * Creates valid TMDb API /movies URL for network requests
      *
      * @param context     Current context
-     * @param sortOrder  Movie sort order ("Most Popular" or "Top Rated")
+     * @param sortOrder   Movie sort order ("Most Popular", "Top Rated")
      * @param page        Results page
+     *
      * @return TMDb API /movies URL
      */
-    public static URL buildMovieUrl(Context context, String sortOrder, Integer page) {
+    public static URL buildMovieUrl(@NonNull Context context, @NonNull String sortOrder, Integer page) {
 
         // Check input params sanity
+        //noinspection ConstantConditions
         if (context == null) {
-            Log.e(TAG, "buildMovieUrl: context parameter cannot be null.");
-            return null;
+            throw new IllegalArgumentException("Context cannot be null");
         }
 
+        //noinspection ConstantConditions
         if (sortOrder == null || sortOrder.length() == 0) {
-            Log.e(TAG, "buildMovieUrl: sort order parameter cannot be null or empty.");
-            return null;
+            throw new IllegalArgumentException("Sort order parameter cannot be null or empty");
         }
 
         if (page == null || page <= 0) {
@@ -134,7 +137,7 @@ public final class NetworkUtils {
             uriBuilder.appendPath(API_PATH_TOP_RATED);
         } else {
             Log.e(TAG, "buildMovieUrl: unknown sort order parameter.");
-            return null;
+            throw new IllegalArgumentException("Unknown sort order parameter");
         }
 
         // API token comes from grade.properties file, see README
@@ -142,12 +145,11 @@ public final class NetworkUtils {
                 .appendQueryParameter(API_PARAM_PAGE, page.toString());
 
         Uri tmdbMovieUri = uriBuilder.build();
-
         try {
             return new URL(tmdbMovieUri.toString());
         } catch (MalformedURLException e) {
             e.printStackTrace();
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
@@ -178,7 +180,7 @@ public final class NetworkUtils {
             return new URL(videosUri.toString());
         } catch (MalformedURLException e) {
             e.printStackTrace();
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
@@ -208,7 +210,7 @@ public final class NetworkUtils {
             return new URL(reviewsUri.toString());
         } catch (MalformedURLException e) {
             e.printStackTrace();
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
@@ -259,7 +261,7 @@ public final class NetworkUtils {
      *
      * @return true if network connection available
      */
-    public static boolean isNetworkAvailable(Context context) {
+    public static boolean isNetworkAvailable(@NonNull Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         if (cm != null) {

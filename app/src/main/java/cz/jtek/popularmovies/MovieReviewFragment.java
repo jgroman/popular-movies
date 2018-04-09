@@ -28,7 +28,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import cz.jtek.popularmovies.utilities.MockDataUtils;
 import cz.jtek.popularmovies.utilities.NetworkUtils;
 import cz.jtek.popularmovies.utilities.NetworkUtils.AsyncTaskResult;
 import cz.jtek.popularmovies.utilities.TmdbJsonUtils;
@@ -37,6 +36,7 @@ import cz.jtek.popularmovies.utilities.UIUtils;
 public class MovieReviewFragment extends Fragment
         implements AdapterView.OnItemClickListener {
 
+    @SuppressWarnings("unused")
     private static final String TAG = MovieReviewFragment.class.getSimpleName();
 
     private Context mContext;
@@ -120,9 +120,9 @@ public class MovieReviewFragment extends Fragment
      * Review list item click listener
      *
      * @param adapterView   AdapterView where the click happened
-     * @param view             Clicked view
-     * @param position        Position of the view in the adapter
-     * @param id                Row id of the clicked item
+     * @param view          Clicked view
+     * @param position      Position of the view in the adapter
+     * @param id            Row id of the clicked item
      */
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {

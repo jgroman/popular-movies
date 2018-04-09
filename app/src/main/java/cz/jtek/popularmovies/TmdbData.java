@@ -18,7 +18,6 @@ package cz.jtek.popularmovies;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,6 +27,7 @@ import java.util.ArrayList;
 
 public class TmdbData {
 
+    @SuppressWarnings("unused")
     private static final String TAG = TmdbData.class.getSimpleName();
 
     /**
@@ -112,7 +112,7 @@ public class TmdbData {
         static int getPosterHeight() { return DEFAULT_MOVIE_POSTER_HEIGHT; }
 
         String getSecureBaseUrl() { return mSecureBaseUrl; }
-        public void setSecureBaseUrl(String url) { mSecureBaseUrl = url; }
+        //public void setSecureBaseUrl(String url) { mSecureBaseUrl = url; }
 
         Config() {}
 
@@ -200,7 +200,7 @@ public class TmdbData {
 
         // Release date
         String getReleaseDate() { return mReleaseDate; }
-        public void setReleaseDate(String releaseDate) { mReleaseDate = releaseDate; }
+        //public void setReleaseDate(String releaseDate) { mReleaseDate = releaseDate; }
 
         // Poster path
         String getPosterPath() { return mPosterPath; }
@@ -208,11 +208,11 @@ public class TmdbData {
 
         // Vote average
         double getVoteAverage() { return mVoteAverage; }
-        public void setVoteAverage(double voteAverage) { mVoteAverage = voteAverage; }
+        //public void setVoteAverage(double voteAverage) { mVoteAverage = voteAverage; }
 
         // Overview
         String getOverview() { return mOverview; }
-        public void setOverview(String overview) { mOverview = overview; }
+        //public void setOverview(String overview) { mOverview = overview; }
 
         public Movie() { }
 
@@ -332,9 +332,9 @@ public class TmdbData {
 
         // Available Video types
         static final String TYPE_TRAILER = "Trailer";
-        static final String TYPE_TEASER = "Teaser";
-        static final String TYPE_CLIP = "Clip";
-        static final String TYPE_FEATURETTE = "Featurette";
+        //static final String TYPE_TEASER = "Teaser";
+        //static final String TYPE_CLIP = "Clip";
+        //static final String TYPE_FEATURETTE = "Featurette";
 
         String mId;
         String mName;
@@ -356,7 +356,7 @@ public class TmdbData {
 
         // Site
         public String getSite() { return mSite; }
-        public void setSite(String site) { mSite = site; }
+        //public void setSite(String site) { mSite = site; }
 
         // Type
         public String getType() { return mType; }
@@ -433,7 +433,7 @@ public class TmdbData {
 
         // Author
         public String getAuthor() { return mAuthor; }
-        public void setAuthor(String author) { mAuthor = author; }
+        //public void setAuthor(String author) { mAuthor = author; }
 
         // Content
         public String getContent() { return mContent; }
@@ -441,7 +441,7 @@ public class TmdbData {
 
         // URL
         public String getUrl() { return mUrl; }
-        public void setUrl(String url) { mUrl = url; }
+        //public void setUrl(String url) { mUrl = url; }
 
         // Constructor converting JSON object to object instance
         static Review fromJson(JSONObject jsonObject)
