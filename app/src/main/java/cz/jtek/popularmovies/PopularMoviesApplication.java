@@ -11,8 +11,10 @@ public class PopularMoviesApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
-        // Initialize Stetho
-        Stetho.initializeWithDefaults(this);
+        if (BuildConfig.DEBUG) {
+            // Initialize Stetho
+            Stetho.initializeWithDefaults(this);
+        }
 
     }
 
